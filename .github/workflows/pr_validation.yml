@@ -1,0 +1,138 @@
+name: Validate terraform configurations for cloud resources
+
+on:
+  # push:
+  #   branches-ignore: [ "main" ]
+  #   paths:
+  #     - 'ec2/**/*'
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  check_ec2_changes:
+    name: Check files
+
+    outputs:
+      run_job: ${{ steps.check_files.outputs.run_job }}
+
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout code to flag modifications
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+
+    - name: Check modified files
+      id: check_files
+      run: |
+        echo "=============== list modified files ==============="
+        git diff --name-only HEAD^ HEAD
+
+        echo "========== check paths of modified files =========="
+        git diff --name-only HEAD^ HEAD > files.txt
+        while IFS= read -r file
+        do
+          echo $file
+          if [[ $file == ec2/* ]]; then
+            echo "run_job=true" >> $GITHUB_OUTPUT
+            break
+          else
+            echo "This modified file is not under the 'ec2' folder."
+            echo "run_job=false" >> $GITHUB_OUTPUT
+            continue
+          fi
+        done < files.txt
+
+  ec2_validation:
+    name: 'EC2 Validation'
+    needs: check_ec2_changes
+    if: needs.check_ec2_changes.outputs.run_job == 'true'
+
+    runs-on: ubuntu-latest
+
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./ec2
+
+    steps:
+    - name: Code checkout
+      uses: actions/checkout@v4
+
+    # # Setup temporary TLS keys for terraform plan to work
+    # - name: Setup TLS keys
+    #   run:  |
+    #     mkdir .ssh && chmod 755 .ssh
+    #     ssh-keygen -m PEM -t ed25519 -f .ssh/id_ed25519_aws.pem -P "" -q
+
+    # # Setup GitHub Credentials
+    # - name: Setup AWS Credentials
+    #   uses: aws-actions/configure-aws-credentials@v4
+    #   with:
+    #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #     aws-region: us-east-2
+
+    # Install the latest version of Terraform CLI
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+    - name: Terraform Init
+      id: init
+      run: terraform init
+
+    # Checks that all Terraform configuration files adhere to a canonical format
+    - name: Terraform Format
+      id: fmt
+      run: terraform fmt -check
+
+      # Validates all Terraform configuration files
+    - name: Terraform Validate
+      id: validate
+      run: terraform validate -no-color
+
+    # # Generates an execution plan for Terraform
+    # - name: Terraform Plan
+    #   id: plan
+    #   run: terraform plan -no-color -input=false -var "my_ip=192.0.0.1" -var "default_user_password=$(date +%d%h%y-%R)"
+    #   continue-on-error: true
+
+    # # Cleanup temporary files
+    # - name: Cleanup
+    #   run: rm -rf .ssh
+
+    # Add a PR comment
+    - name: Comment on PR
+      uses: actions/github-script@v7
+      # if: github.event_name == 'pull_request' && ( github.event.pull_request.synchronize == true || github.event.pull_request.opened == true )
+      with:
+        github-token: ${{ secrets.PR_UPDATE_TOKEN }}
+        script: |
+          const output = `#### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+          #### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+          #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+          <details><summary>Validation Output</summary>
+
+          \`\`\`\n
+          ${{ steps.validate.outputs.stdout }}
+          \`\`\`
+
+          </details>
+
+          *Pusher: @${{ github.actor }},
+          Action: \`${{ github.event_name }}\`,
+          Working Directory: \`${{ env.tf_actions_working_dir }}\`,
+          Workflow: \`${{ github.workflow }}\`*`;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })
