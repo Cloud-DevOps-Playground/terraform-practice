@@ -2,6 +2,8 @@
 Deploy basic EC2 instance(s) with your own private-public key-pair.
 
 ## Generate the TLS private-public key-pair
+**Note**: This is for information purpose only and can be ignored.
+
 Generate PEM files using `ssh-keygen` command:
 ```
 $ mkdir .ssh
@@ -58,13 +60,13 @@ $ terraform destroy --auto-approve -var my_ip=$(curl -s -4 ifconfig.info | tr -d
 
 (Assuming AMI default user to be **ec2-user**.)
 ```
-$ ssh -p <CUSTOM_SSH_PORT> -i ./.ssh/id_ed25519_aws.pem -l ec2-user $(terraform output -raw instance_public_dns)
+$ ssh -p <CUSTOM_SSH_PORT> -i id_ed25519_aws.pem -l ec2-user $(terraform output -raw instance_public_dns)
 ```
 
 **Tip**: If you don't know the user, try logging in as root. This would suggest the preferred login user as shown here:
 
 ```
-$ ssh -p <CUSTOM_SSH_PORT> -i ./.ssh/id_ed25519_aws.pem -l root $(terraform output -raw instance_public_dns)
+$ ssh -p <CUSTOM_SSH_PORT> -i id_ed25519_aws.pem -l root $(terraform output -raw instance_public_dns)
 Please login as the user "ec2-user" rather than the user "root".
 
 Connection to <instance_public_dns> closed.

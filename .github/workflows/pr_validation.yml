@@ -64,12 +64,6 @@ jobs:
     - name: Code checkout
       uses: actions/checkout@v4
 
-    # # Setup temporary TLS keys for terraform plan to work
-    # - name: Setup TLS keys
-    #   run:  |
-    #     mkdir .ssh && chmod 755 .ssh
-    #     ssh-keygen -m PEM -t ed25519 -f .ssh/id_ed25519_aws.pem -P "" -q
-
     # # Setup GitHub Credentials
     # - name: Setup AWS Credentials
     #   uses: aws-actions/configure-aws-credentials@v4
@@ -102,10 +96,6 @@ jobs:
     #   id: plan
     #   run: terraform plan -no-color -input=false -var "my_ip=192.0.0.1" -var "default_user_password=$(date +%d%h%y-%R)"
     #   continue-on-error: true
-
-    # # Cleanup temporary files
-    # - name: Cleanup
-    #   run: rm -rf .ssh
 
     # Add a PR comment
     - name: Comment on PR
