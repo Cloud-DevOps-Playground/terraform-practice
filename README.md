@@ -3,3 +3,6 @@ Each folder in this repo represents a cloud resource that can be configured usin
 
 # Table Of Contents
 *  [EC2](ec2/README.md)
+
+# Reference
+*  [Terraform Registry for AWS provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
