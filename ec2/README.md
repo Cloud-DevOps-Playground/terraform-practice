@@ -14,8 +14,8 @@ $ chmod 644 .ssh/id_ed25519_aws.pem.pub
 $ ssh-keygen -y -P "" -f .ssh/id_ed25519_aws.pem    # <= Validate generated key
 $ ls -Al .ssh
 total 2
--r--r--r-- 1 Yashodhan 197121 411 Dec 11 17:08 id_ed25519_aws.pem
--rw-r--r-- 1 Yashodhan 197121 103 Dec 11 17:08 id_ed25519_aws.pem.pub
+-r--r--r-- 1 local_user 197121 411 Dec 11 17:08 id_ed25519_aws.pem
+-rw-r--r-- 1 local_user 197121 103 Dec 11 17:08 id_ed25519_aws.pem.pub
 ```
 
 # Populate user variables
