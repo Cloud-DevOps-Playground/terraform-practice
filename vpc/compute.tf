@@ -39,7 +39,7 @@
 # }
 
 resource "aws_instance" "linux_server" {
-  # count           = var.ec2_instance_count
+  count         = var.ec2_instance_count
   ami           = var.ami_id
   instance_type = var.ec2_instance_type
 
