@@ -30,11 +30,13 @@ resource "aws_instance" "linux_server" {
 
   user_data = <<-EOF
         #!/bin/sh
+        echo "Welcome to $(hostname)" > /etc/motd.d/${var.tag_name}
+
+        # sshd service config
         echo 'Port ${var.ssh_port}' > /etc/ssh/sshd_config.d/${var.tag_name}.conf
-        echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config.d/${var.tag_name}.conf
+        echo 'PermitRootLogin no' >> /etc/ssh/sshd_config.d/${var.tag_name}.conf
         echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config.d/${var.tag_name}.conf
         systemctl restart sshd
-        echo "HISTCONTROL=ignoreboth" >> /home/ec2-user/.bash_profile
   EOF
 
   connection {
@@ -46,14 +48,14 @@ resource "aws_instance" "linux_server" {
   }
 
   provisioner "file" {
-    source      = "setup.sh"
-    destination = "/tmp/setup.sh"
+    source      = "../scripts/ec2_setup.sh"
+    destination = "/tmp/setup"
   }
 
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /tmp/setup.sh",
-      "DEFAULT_USER=root DEFAULT_USER_PASSWORD=\"${var.default_user_password}\" /tmp/setup.sh"
+      "chmod +x /tmp/setup",
+      "DEFAULT_USER=root DEFAULT_USER_PASSWORD=\"${var.default_user_password}\" /tmp/setup"
     ]
   }
 
