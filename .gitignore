@@ -1,3 +1,6 @@
+# VSCode settings
+**/.vscode/*
+
 # Local .terraform directories
 **/.terraform/*
 

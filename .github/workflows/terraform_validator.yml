@@ -1,0 +1,67 @@
+name: Validate terraform configurations
+
+
+on:
+  workflow_call:
+    inputs:
+      workdir:
+        required: true
+        type: string
+    outputs:
+      init_outcome:
+        description: "Terraform init outcome"
+        value: ${{ jobs.terraform_validation.outputs.init_outcome }}
+      fmt_outcome:
+        description: "Terraform fmt outcome"
+        value: ${{ jobs.terraform_validation.outputs.fmt_outcome }}
+      validate_outcome:
+        description: "Terraform validate outcome"
+        value: ${{ jobs.terraform_validation.outputs.validate_outcome }}
+
+
+jobs:
+  terraform_validation:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.workdir }}
+
+    outputs:
+      init_outcome: ${{ steps.init.outcome }}
+      fmt_outcome: ${{ steps.fmt.outcome }}
+      validate_outcome: ${{ steps.validate.outcome }}
+
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: hashicorp/setup-terraform@v3
+
+    # Checks that all Terraform configuration files adhere to a canonical format
+    - name: Terraform Format
+      id: fmt
+      run: terraform fmt -check
+      continue-on-error: true
+
+    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+    - name: Terraform Init
+      id: init
+      run: terraform init
+
+      # Validates all Terraform configuration files
+    - name: Terraform Validate
+      id: validate
+      run: terraform validate -no-color
+
+    # - name: Setup AWS Credentials
+    #   uses: aws-actions/configure-aws-credentials@v4
+    #   with:
+    #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #     aws-region: us-east-2
+
+    # # Generates an execution plan for Terraform
+    # - name: Terraform Plan
+    #   id: plan
+    #   run: terraform plan -no-color -input=false -var "my_ip=192.0.0.1" -var "default_user_password=$(date +%d%h%y-%R)"
+    #   continue-on-error: true

@@ -39,6 +39,8 @@
 # }
 
 resource "aws_instance" "linux_server" {
+  depends_on = [aws_internet_gateway.ipv6_gw]
+
   count         = var.ec2_instance_count
   ami           = var.ami_id
   instance_type = var.ec2_instance_type
@@ -60,19 +62,47 @@ resource "aws_instance" "linux_server" {
   #   device_index         = 0
   # }
 
-  # Use when noy using VPC, conflicts with vpc_security_group_ids
+  # Use when not using VPC, conflicts with vpc_security_group_ids
   # NOTE from documentation: If you are creating Instances in a VPC, use vpc_security_group_ids instead.
   # security_groups        = [aws_security_group.allow_ssh.name]
 
-  user_data = <<-EOF
-#!/bin/sh
-echo 'Port ${var.ssh_port}' > /etc/ssh/sshd_config.d/${var.tag_name}.conf
-systemctl restart sshd
-  EOF
+  lifecycle {
+    create_before_destroy = false
+    prevent_destroy       = false
+  }
+
+  user_data = <<-EOT
+        #!/bin/sh
+        echo "Welcome to $(hostname)" > /etc/motd.d/${var.tag_name}
+
+        # sshd service config
+        echo 'Port ${var.ssh_port}' > /etc/ssh/sshd_config.d/${var.tag_name}.conf
+        echo 'PermitRootLogin no' >> /etc/ssh/sshd_config.d/${var.tag_name}.conf
+        echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config.d/${var.tag_name}.conf
+        systemctl restart sshd
+  EOT
+
+  connection {
+    type        = "ssh"
+    user        = "ec2-user"
+    private_key = tls_private_key.ssh_key.private_key_pem
+    host        = element(self.ipv6_addresses, 0)
+    port        = var.ssh_port
+  }
+
+  provisioner "file" {
+    source      = "../scripts/ec2_setup.sh"
+    destination = "/tmp/setup"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/setup",
+      "/tmp/setup"
+    ]
+  }
 
   tags = {
     Name = var.tag_name
   }
-
-  depends_on = [aws_internet_gateway.ipv6_gw]
 }
