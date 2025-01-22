@@ -21,42 +21,54 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-    - name: Checkout code to flag modifications
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 2
+      - name: Checkout code to flag modifications
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
-    - name: Check modified files
-      id: check_files
-      run: |
-        echo "=============== list modified files ==============="
-        git diff --name-only HEAD^ HEAD
+      - name: Check modified files
+        id: check_files
+        run: |
+          echo "=============== list modified files ==============="
+          git diff --name-only HEAD^ HEAD
 
-        echo "========== check paths of modified files =========="
-        git diff --name-only HEAD^ HEAD > files.txt
-        while IFS= read -r file
-        do
-          echo "$file"
-          if [[ $file == ec2/* ]] || [[ $file == vpc/* ]]; then
-            echo "run_job=true" >> $GITHUB_OUTPUT
-            break
-          else
-            echo "This modified file is not under the 'ec2' or 'vpc' folder."
-            echo "run_job=false" >> $GITHUB_OUTPUT
-          fi
-        done < files.txt
+          echo "========== check paths of modified files =========="
+          git diff --name-only HEAD^ HEAD > files.txt
+          while IFS= read -r file
+          do
+            echo "$file"
+            if [[ $file == ec2/* ]]; then
+              echo "run_job=ec2" >> $GITHUB_OUTPUT
+              break
+            elif [[ $file == s3/* ]]; then
+              echo "run_job=s3" >> $GITHUB_OUTPUT
+              break
+            elif  [[ $file == vpc/* ]]; then
+              echo "run_job=vpc" >> $GITHUB_OUTPUT
+              break
+            else
+              echo "This modified file is not under the 'ec2', 's3' or 'vpc' folder."
+              echo "run_job=false" >> $GITHUB_OUTPUT
+            fi
+          done < files.txt
 
   ec2_validation:
     needs: check_ws_changes
-    if: needs.check_ws_changes.outputs.run_job == 'true'
+    if: needs.check_ws_changes.outputs.run_job == 'ec2'
     uses: ./.github/workflows/terraform_validator.yml
     with:
       workdir: ec2
 
+  s3_validation:
+    needs: check_ws_changes
+    if: needs.check_ws_changes.outputs.run_job == 's3'
+    uses: ./.github/workflows/terraform_validator.yml
+    with:
+      workdir: s3
 
   vpc_validation:
     needs: check_ws_changes
-    if: needs.check_ws_changes.outputs.run_job == 'true'
+    if: needs.check_ws_changes.outputs.run_job == 'vpc'
     uses: ./.github/workflows/terraform_validator.yml
     with:
       workdir: vpc
@@ -66,78 +78,129 @@ jobs:
     needs: ec2_validation
 
     steps:
-    - name: Comment on PR for EC2
-      uses: actions/github-script@v7
-      if: github.event_name == 'pull_request'
-      with:
-        github-token: ${{ secrets.PR_UPDATE_TOKEN }}
-        script: |
-          const output = `
-          <details>
-          <summary>Validation Output for EC2</summary>
-          <p>#### Terraform Initialization ⚙️\`${{ needs.ec2_validation.outputs.init_outcome }}\`</p>
-          <p>#### Terraform Format and Style 🖌\`${{ needs.ec2_validation.outputs.fmt_outcome }}\`</p>
-          <p>#### Terraform Validation 🤖\`${{ needs.ec2_validation.outputs.validate_outcome }}\`</p>
-          </details>
+      - name: Comment on PR for EC2 changes
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.PR_UPDATE_TOKEN }}
+          script: |
+            const output = `
+            <details>
+            <summary>Validation Output for EC2</summary>
+            <p>#### Terraform Initialization ⚙️\`${{ needs.ec2_validation.outputs.init_outcome }}\`</p>
+            <p>#### Terraform Format and Style 🖌\`${{ needs.ec2_validation.outputs.fmt_outcome }}\`</p>
+            <p>#### Terraform Validation 🤖\`${{ needs.ec2_validation.outputs.validate_outcome }}\`</p>
+            </details>
 
-          *Pusher: @${{ github.actor }},
-          Action: \`${{ github.event_name }}\`,
-          Workflow: \`${{ github.workflow }}\`*`;
+            *Pusher: @${{ github.actor }},
+            Action: \`${{ github.event_name }}\`,
+            Workflow: \`${{ github.workflow }}\`*`;
 
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: output
-          })
-
-  pr_update_for_vpc:
-    runs-on: ubuntu-latest
-    needs: vpc_validation
-
-    steps:
-    - name: Comment on PR for VPC
-      uses: actions/github-script@v7
-      if: github.event_name == 'pull_request'
-      with:
-        github-token: ${{ secrets.PR_UPDATE_TOKEN }}
-        script: |
-          // 1. Retrieve existing bot comments for the PR
-          const { data: comments } = await github.rest.issues.listComments({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: context.issue.number,
-          })
-          const botComment = comments.find(comment => {
-            return comment.user.type === 'Bot' && comment.body.includes('Terraform Format and Style')
-          })
-
-          // 2. Prepare format of the comment
-          const output = `
-          <details>
-          <summary>Validation Output for VPC</summary>
-          <p>#### Terraform Initialization ⚙️\`${{ needs.vpc_validation.outputs.init_outcome }}\`</p>
-          <p>#### Terraform Format and Style 🖌\`${{ needs.vpc_validation.outputs.fmt_outcome }}\`</p>
-          <p>#### Terraform Validation 🤖\`${{ needs.vpc_validation.outputs.validate_outcome }}\`</p>
-          </details>
-
-          *Pusher: @${{ github.actor }},
-          Action: \`${{ github.event_name }}\`,
-          Workflow: \`${{ github.workflow }}\`*`;
-
-          // 3. If we have a comment, update it, otherwise create a new one
-          if (botComment) {
-            github.rest.issues.updateComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: botComment.id,
-              body: output
-            })
-          } else {
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: output
             })
-          }
+
+  pr_update_for_s3:
+    runs-on: ubuntu-latest
+    needs: s3_validation
+
+    steps:
+      - name: Comment on PR for S3 changes
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.PR_UPDATE_TOKEN }}
+          script: |
+            // 1. Retrieve existing bot comments for the PR
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            })
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('Terraform Format and Style')
+            })
+
+            // 2. Prepare format of the comment
+            const output = `
+            <details>
+            <summary>Validation Output for S3</summary>
+            <p>#### Terraform Initialization ⚙️\`${{ needs.s3_validation.outputs.init_outcome }}\`</p>
+            <p>#### Terraform Format and Style 🖌\`${{ needs.s3_validation.outputs.fmt_outcome }}\`</p>
+            <p>#### Terraform Validation 🤖\`${{ needs.s3_validation.outputs.validate_outcome }}\`</p>
+            </details>
+
+            *Pusher: @${{ github.actor }},
+            Action: \`${{ github.event_name }}\`,
+            Workflow: \`${{ github.workflow }}\`*`;
+
+            // 3. If we have a comment, update it, otherwise create a new one
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              })
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
+
+  pr_update_for_vpc:
+    runs-on: ubuntu-latest
+    needs: vpc_validation
+
+    steps:
+      - name: Comment on PR for VPC changes
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.PR_UPDATE_TOKEN }}
+          script: |
+            // 1. Retrieve existing bot comments for the PR
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            })
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('Terraform Format and Style')
+            })
+
+            // 2. Prepare format of the comment
+            const output = `
+            <details>
+            <summary>Validation Output for VPC</summary>
+            <p>#### Terraform Initialization ⚙️\`${{ needs.vpc_validation.outputs.init_outcome }}\`</p>
+            <p>#### Terraform Format and Style 🖌\`${{ needs.vpc_validation.outputs.fmt_outcome }}\`</p>
+            <p>#### Terraform Validation 🤖\`${{ needs.vpc_validation.outputs.validate_outcome }}\`</p>
+            </details>
+
+            *Pusher: @${{ github.actor }},
+            Action: \`${{ github.event_name }}\`,
+            Workflow: \`${{ github.workflow }}\`*`;
+
+            // 3. If we have a comment, update it, otherwise create a new one
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              })
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
