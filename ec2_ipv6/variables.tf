@@ -29,24 +29,6 @@ variable "ec2_instance_type" {
   default     = "t2.micro"
 }
 
-variable "key_name" {
-  description = "SSH key name"
-  type        = string
-  default     = "id_ed25519_aws"
-}
-
-variable "my_ip" {
-  description = "host machine ip for ssh `$(curl -s -4 ifconfig.info | tr -d [:space:])`"
-  type        = string
-}
-
-variable "ssh_port" {
-  description = "Custom SSH port to open for communication over ssh protocol."
-  type        = number
-  sensitive   = true
-  default     = 22
-}
-
 variable "tag_name" {
   description = "TAG name for multi instances"
   type        = string

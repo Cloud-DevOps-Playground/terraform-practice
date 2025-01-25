@@ -1,5 +1,12 @@
-# Create VPC
-Create a VPC with public subnet for IPv6 traffic.
+# Deploy EC2 Instance(s)
+Deploy basic EC2 instance(s) with IPv4 public IP.
+
+## Prerequisites
+1. Ensure a AWS key-pair resource is already created before proceeding to create EC2 instance.\
+To create a AWS key-pair resource, follow [AWS Key-Pair Management](../key_management/README.md#AWS_Key-Pair_Management).
+
+2. Ensure the AWS VPC, subnet and security groups for IPv6 subnet are created.
+To create a AWS VPC, subnet and security groups for IPv6, follow: [Create IPv6 VPC](../vpc/README.md#Create_IPv6_VPC).
 
 ## Populate user variables
 *  Copy `user.tfvars` to `user.auto.tfvars`.
@@ -19,21 +26,21 @@ Create a VPC with public subnet for IPv6 traffic.
 
 ## Create resources
 Perform the following steps using AWS CLI:
-1. Create a new security group in default subnet, in order to allow ssh access to EC2 instance
+1. Create EC2 instance and assign the key-pair as well as the new created security group
 
 **Note**: Remember to assign your public IP (_your Internet Provided IP as seen by AWS_) to the **_my_ip_** variable
 </br>Or
 </br>just rely on `-var my_ip=$(curl -s -6 ifconfig.info | tr -d [:space:])` as used in command below:
 
 ```bash
-$ terraform plan -var my_ip=$(curl -s -6 ifconfig.info | tr -d [:space:])                   # Generates a speculative execution plan
-$ terraform apply --auto-approve -var my_ip=$(curl -s -6 ifconfig.info | tr -d [:space:])   # Actually create the resources
+$ terraform plan                    # Generates a speculative execution plan
+$ terraform apply --auto-approve    # Actually create the resources
 ```
 
 ## Destroy resources
 Cleanup all the resources created by the `apply` command in previous step.
 ```bash
-$ terraform destroy --auto-approve -var my_ip=$(curl -s -6 ifconfig.info | tr -d [:space:])
+$ terraform destroy --auto-approve
 ```
 
 ## Connect to AWS

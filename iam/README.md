@@ -1,10 +1,10 @@
-# S3 Bucket
-Create a S3 bucket resouce.
+# Setup IAM Roles
+Create IAM roles with policies to enable read-only S3 buacket access from EC2 instance.
 
 # Populate user variables
 *  Copy `user.tfvars` to `user.auto.tfvars`.
     ```bash
-    $ cd s3
+    $ cd iam
     $ cp user.tfvars user.auto.tfvars
     ```
 
@@ -19,8 +19,7 @@ Create a S3 bucket resouce.
 
 ## Create resources
 Perform the following steps using AWS CLI:
-1. Create S3 bucket
-
+1. Create the IAM role with associated permissions/policies and relationships
 ```bash
 $ terraform plan                   # Generates a speculative execution plan
 $ terraform apply                  # Actually create the resources
