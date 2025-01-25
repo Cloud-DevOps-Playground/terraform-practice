@@ -10,6 +10,11 @@ resource "aws_key_pair" "ssh_key_pair" {
   # Use the local public key file
   # public_key = file(".ssh/${var.key_name}.pem.pub")
   public_key = tls_private_key.ssh_key.public_key_openssh
+
+  # Resource Tagging
+  tags = {
+    Name = var.tag_name
+  }
 }
 
 # Save the dynamically generated key pair pem file

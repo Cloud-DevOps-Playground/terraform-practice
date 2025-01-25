@@ -10,10 +10,6 @@ fi
 # echo -e "${DEFAULT_USER_PASSWORD}" | sudo passwd ${DEFAULT_USER} --stdin
 
 readonly CUSTOM_PROFILE=custom_profile_file
-
-# Update system packages
-dnf update -y && dnf clean all
-
 # Custom profile for user shell.
 # User login profile based hardening
 echo "HISTCONTROL=ignoreboth" | sudo tee /etc/profile.d/${CUSTOM_PROFILE}.sh
@@ -31,17 +27,16 @@ echo '[ "root" == "$USER" -a -n "$SSH_TTY" ] \
 		pkill -KILL -u root\
 	)' | sudo tee -a /etc/profile.d/${CUSTOM_PROFILE}.sh
 
+# Update system packages
+sudo dnf update -y && sudo dnf clean all
+
+# Setup for S3 bucket mount
+# wget https://s3.amazonaws.com/mountpoint-s3-release/latest/$(uname -p)/mount-s3.rpm
+# sudo dnf install -y mount-s3.rpm
+# sudo mkdir -p /mnt/s3bucket
+# sudo mount-s3 s3bucketsaws<name of the bucket> /mnt/s3bucket
+
 # Commented as this doesn't work for non-privileged users
-# echo '[ "root" != "$USER" -a -n "$SSH_TTY" ] && sudo systemctl start user-login-gatekeeper.service' | sudo tee -a /etc/profile.d/${CUSTOM_PROFILE}.sh
-
-# # This rsyslod config is an alternative to journalctl query for sshd
-# # This rsyslog config enables generation of /var/log/secure file
-# dnf install -y rsyslog
-# systemctl enable --now rsyslog
-# echo 'SyslogFacility AUTH' >> /etc/ssh/sshd_config.d/${var.tag_name}.conf
-# echo 'LogLevel INFO' >> /etc/ssh/sshd_config.d/${var.tag_name}.conf
-# systemctl restart sshd
-
 # cat<<EOF >> /etc/systemd/system/user-login-gatekeeper.service
 # [Unit]
 # Description=Capture username on user login
@@ -69,6 +64,16 @@ echo '[ "root" == "$USER" -a -n "$SSH_TTY" ] \
 
 # # journalctl _SYSTEMD_UNIT=sshd.service -n 10 --grep "Accepted" | grep -oP 'sshd.*: Accepted publickey for \K\w[-\w]+' | tail -1
 # EOF
+# echo '[ "root" != "$USER" -a -n "$SSH_TTY" ] && sudo systemctl start user-login-gatekeeper.service' | sudo tee -a /etc/profile.d/${CUSTOM_PROFILE}.sh
+
+# # This rsyslod config is an alternative to journalctl query for sshd
+# # This rsyslog config enables generation of /var/log/secure file
+# dnf install -y rsyslog
+# systemctl enable --now rsyslog
+# echo 'SyslogFacility AUTH' >> /etc/ssh/sshd_config.d/${var.tag_name}.conf
+# echo 'LogLevel INFO' >> /etc/ssh/sshd_config.d/${var.tag_name}.conf
+# systemctl restart sshd
+
 
 # sudo dnf dnf install -y docker
 # sudo systemctl enable --now docker

@@ -1,4 +1,3 @@
-
 # data "aws_ami" "latest_ami" {
 #   most_recent = true
 #   owners      = ["amazon"]
@@ -20,14 +19,22 @@
 #   }
 # }
 
+data "aws_key_pair" "ssh_key_pair" {
+  filter {
+    name   = "tag:Name"
+    values = [var.tag_name]
+  }
+}
+
 resource "aws_instance" "linux_server" {
-  # availability_zone = data.aws_availability_zones.available.names[0]
+  # Basic Instance Setup
   # count           = var.ec2_instance_count
   ami             = var.ami_id
   instance_type   = var.ec2_instance_type
-  key_name        = aws_key_pair.ssh_key_pair.key_name
+  key_name        = data.aws_key_pair.ssh_key_pair.key_name
   security_groups = [aws_security_group.allow_ssh.name]
 
+  # Provisioning Setup
   user_data = <<-EOF
         #!/bin/sh
         echo "Welcome to $(hostname)" > /etc/motd.d/${var.tag_name}
@@ -40,15 +47,16 @@ resource "aws_instance" "linux_server" {
   EOF
 
   connection {
-    type        = "ssh"
-    user        = "ec2-user"
-    private_key = tls_private_key.ssh_key.private_key_pem
+    type = "ssh"
+    user = "ec2-user"
+    # private_key = tls_private_key.ssh_key.private_key_pem
+    private_key = file("${path.module}/../key_management/${data.aws_key_pair.ssh_key_pair.key_name}.pem")
     host        = aws_instance.linux_server.public_ip
     port        = var.ssh_port
   }
 
   provisioner "file" {
-    source      = "../scripts/ec2_setup.sh"
+    source      = "${path.module}/../scripts/amazon_linux_2023_setup.sh"
     destination = "/tmp/setup"
   }
 
@@ -59,6 +67,7 @@ resource "aws_instance" "linux_server" {
     ]
   }
 
+  # Resource Tagging
   tags = {
     Name = var.tag_name
   }

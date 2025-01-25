@@ -11,8 +11,3 @@ output "instance_public_dns" {
   value = aws_instance.linux_server.public_dns
   # sensitive   = true
 }
-
-# output "selected_ami" {
-#   description = "Selected AMI for the EC2 instance"
-#   value       = data.aws_ami.latest_ami
-# }

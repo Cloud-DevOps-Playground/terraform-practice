@@ -91,7 +91,6 @@ resource "aws_vpc_security_group_ingress_rule" "security_group_ingress_rule" {
   security_group_id = aws_security_group.allow_ssh.id
   description       = "Security group ingress rule for ssh connectivity."
 
-  # cidr_ipv4   = "${var.my_ip}/32"
   # cidr_ipv6 = aws_vpc.ipv6_vpc.ipv6_cidr_block
   cidr_ipv6   = "${var.my_ip}/128"
   from_port   = var.ssh_port
@@ -100,6 +99,7 @@ resource "aws_vpc_security_group_ingress_rule" "security_group_ingress_rule" {
 
   tags = {
     Name = var.tag_name
+    Type = "custom_ssh_port"
   }
 }
 
@@ -107,7 +107,6 @@ resource "aws_vpc_security_group_egress_rule" "security_group_egress_rule" {
   security_group_id = aws_security_group.allow_ssh.id
   description       = "Security group egress rule."
 
-  # cidr_ipv4 = "0.0.0.0/0"
   cidr_ipv6   = "::/0"
   ip_protocol = "-1"
 

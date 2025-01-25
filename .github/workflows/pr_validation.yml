@@ -16,7 +16,12 @@ jobs:
     name: Check files
 
     outputs:
-      run_job: ${{ steps.check_files.outputs.run_job }}
+      run_ec2_ipv4_job: ${{ steps.check_files.outputs.run_ec2_ipv4_job }}
+      run_ec2_ipv6_job: ${{ steps.check_files.outputs.run_ec2_ipv6_job }}
+      run_iam_job: ${{ steps.check_files.outputs.run_iam_job }}
+      run_key_management_job: ${{ steps.check_files.outputs.run_key_management_job }}
+      run_s3_job: ${{ steps.check_files.outputs.run_s3_job }}
+      run_vpc_job: ${{ steps.check_files.outputs.run_vpc_job }}
 
     runs-on: ubuntu-24.04
 
@@ -37,48 +42,71 @@ jobs:
           while IFS= read -r file
           do
             echo "$file"
-            if [[ $file == ec2/* ]]; then
-              echo "run_job=ec2" >> $GITHUB_OUTPUT
-              break
+            if [[ $file == ec2_ipv4/* ]]; then
+              echo "run_ec2_ipv4_job=true" >> $GITHUB_OUTPUT
+            elif [[ $file == ec2_ipv6/* ]]; then
+              echo "run_ec2_ipv6_job=true" >> $GITHUB_OUTPUT
+            elif [[ $file == iam/* ]]; then
+              echo "run_iam_job=true" >> $GITHUB_OUTPUT
+            elif [[ $file == key_management/* ]]; then
+              echo "run_key_management_job=true" >> $GITHUB_OUTPUT
             elif [[ $file == s3/* ]]; then
-              echo "run_job=s3" >> $GITHUB_OUTPUT
-              break
+              echo "run_s3_job=true" >> $GITHUB_OUTPUT
             elif  [[ $file == vpc/* ]]; then
-              echo "run_job=vpc" >> $GITHUB_OUTPUT
-              break
+              echo "run_vpc_job=true" >> $GITHUB_OUTPUT
             else
-              echo "This modified file is not under the 'ec2', 's3' or 'vpc' folder."
-              echo "run_job=false" >> $GITHUB_OUTPUT
+              echo "This modified file is not under the 'ec2_ipv4', 'ec2_ipv6', 'iam', 'key_management', 's3' or 'vpc' folder."
             fi
           done < files.txt
 
-  ec2_validation:
+  ec2_ipv4_validation:
     needs: check_ws_changes
-    if: needs.check_ws_changes.outputs.run_job == 'ec2'
+    if: needs.check_ws_changes.outputs.run_ec2_ipv4_job == 'true'
     uses: ./.github/workflows/terraform_validator.yml
     with:
-      workdir: ec2
+      workdir: ec2_ipv4
+
+  ec2_ipv6_validation:
+    needs: check_ws_changes
+    if: needs.check_ws_changes.outputs.run_ec2_ipv6_job == 'true'
+    uses: ./.github/workflows/terraform_validator.yml
+    with:
+      workdir: ec2_ipv6
+
+  iam_validation:
+    needs: check_ws_changes
+    if: needs.check_ws_changes.outputs.run_iam_job == 'true'
+    uses: ./.github/workflows/terraform_validator.yml
+    with:
+      workdir: iam
+
+  key_management_validation:
+    needs: check_ws_changes
+    if: needs.check_ws_changes.outputs.run_key_management_job == 'true'
+    uses: ./.github/workflows/terraform_validator.yml
+    with:
+      workdir: key_management
 
   s3_validation:
     needs: check_ws_changes
-    if: needs.check_ws_changes.outputs.run_job == 's3'
+    if: needs.check_ws_changes.outputs.run_s3_job == 'true'
     uses: ./.github/workflows/terraform_validator.yml
     with:
       workdir: s3
 
   vpc_validation:
     needs: check_ws_changes
-    if: needs.check_ws_changes.outputs.run_job == 'vpc'
+    if: needs.check_ws_changes.outputs.run_vpc_job == 'true'
     uses: ./.github/workflows/terraform_validator.yml
     with:
       workdir: vpc
 
-  pr_update_for_ec2:
+  pr_update_for_ec2_ipv4:
     runs-on: ubuntu-latest
-    needs: ec2_validation
+    needs: ec2_ipv4_validation
 
     steps:
-      - name: Comment on PR for EC2 changes
+      - name: Comment on PR for EC2 IPv4 changes
         uses: actions/github-script@v7
         if: github.event_name == 'pull_request'
         with:
@@ -86,10 +114,100 @@ jobs:
           script: |
             const output = `
             <details>
-            <summary>Validation Output for EC2</summary>
-            <p>#### Terraform Initialization ⚙️\`${{ needs.ec2_validation.outputs.init_outcome }}\`</p>
-            <p>#### Terraform Format and Style 🖌\`${{ needs.ec2_validation.outputs.fmt_outcome }}\`</p>
-            <p>#### Terraform Validation 🤖\`${{ needs.ec2_validation.outputs.validate_outcome }}\`</p>
+            <summary>Validation Output for EC2 IPv4 related changes</summary>
+            <p>#### Terraform Initialization ⚙️\`${{ needs.ec2_ipv4_validation.outputs.init_outcome }}\`</p>
+            <p>#### Terraform Format and Style 🖌\`${{ needs.ec2_ipv4_validation.outputs.fmt_outcome }}\`</p>
+            <p>#### Terraform Validation 🤖\`${{ needs.ec2_ipv4_validation.outputs.validate_outcome }}\`</p>
+            </details>
+
+            *Pusher: @${{ github.actor }},
+            Action: \`${{ github.event_name }}\`,
+            Workflow: \`${{ github.workflow }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+  pr_update_for_ec2_ipv6:
+    runs-on: ubuntu-latest
+    needs: ec2_ipv6_validation
+
+    steps:
+      - name: Comment on PR for EC2 IPv6 changes
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.PR_UPDATE_TOKEN }}
+          script: |
+            const output = `
+            <details>
+            <summary>Validation Output for EC2 IPv6 related changes</summary>
+            <p>#### Terraform Initialization ⚙️\`${{ needs.ec2_ipv6_validation.outputs.init_outcome }}\`</p>
+            <p>#### Terraform Format and Style 🖌\`${{ needs.ec2_ipv6_validation.outputs.fmt_outcome }}\`</p>
+            <p>#### Terraform Validation 🤖\`${{ needs.ec2_ipv6_validation.outputs.validate_outcome }}\`</p>
+            </details>
+
+            *Pusher: @${{ github.actor }},
+            Action: \`${{ github.event_name }}\`,
+            Workflow: \`${{ github.workflow }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+  pr_update_for_iam:
+    runs-on: ubuntu-latest
+    needs: iam_validation
+
+    steps:
+      - name: Comment on PR for IAM changes
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.PR_UPDATE_TOKEN }}
+          script: |
+            const output = `
+            <details>
+            <summary>Validation Output for IAM related changes</summary>
+            <p>#### Terraform Initialization ⚙️\`${{ needs.iam_validation.outputs.init_outcome }}\`</p>
+            <p>#### Terraform Format and Style 🖌\`${{ needs.iam_validation.outputs.fmt_outcome }}\`</p>
+            <p>#### Terraform Validation 🤖\`${{ needs.iam_validation.outputs.validate_outcome }}\`</p>
+            </details>
+
+            *Pusher: @${{ github.actor }},
+            Action: \`${{ github.event_name }}\`,
+            Workflow: \`${{ github.workflow }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+  pr_update_for_key_management:
+    runs-on: ubuntu-latest
+    needs: key_management_validation
+
+    steps:
+      - name: Comment on PR for AWS Key-Pair management changes
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.PR_UPDATE_TOKEN }}
+          script: |
+            const output = `
+            <details>
+            <summary>Validation Output for AWS Key-Pair management related changes</summary>
+            <p>#### Terraform Initialization ⚙️\`${{ needs.key_management_validation.outputs.init_outcome }}\`</p>
+            <p>#### Terraform Format and Style 🖌\`${{ needs.key_management_validation.outputs.fmt_outcome }}\`</p>
+            <p>#### Terraform Validation 🤖\`${{ needs.key_management_validation.outputs.validate_outcome }}\`</p>
             </details>
 
             *Pusher: @${{ github.actor }},
@@ -127,7 +245,7 @@ jobs:
             // 2. Prepare format of the comment
             const output = `
             <details>
-            <summary>Validation Output for S3</summary>
+            <summary>Validation Output for S3 related changes</summary>
             <p>#### Terraform Initialization ⚙️\`${{ needs.s3_validation.outputs.init_outcome }}\`</p>
             <p>#### Terraform Format and Style 🖌\`${{ needs.s3_validation.outputs.fmt_outcome }}\`</p>
             <p>#### Terraform Validation 🤖\`${{ needs.s3_validation.outputs.validate_outcome }}\`</p>
@@ -178,7 +296,7 @@ jobs:
             // 2. Prepare format of the comment
             const output = `
             <details>
-            <summary>Validation Output for VPC</summary>
+            <summary>Validation Output for VPC related changes</summary>
             <p>#### Terraform Initialization ⚙️\`${{ needs.vpc_validation.outputs.init_outcome }}\`</p>
             <p>#### Terraform Format and Style 🖌\`${{ needs.vpc_validation.outputs.fmt_outcome }}\`</p>
             <p>#### Terraform Validation 🤖\`${{ needs.vpc_validation.outputs.validate_outcome }}\`</p>

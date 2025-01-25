@@ -1,24 +1,11 @@
 # Deploy EC2 Instance(s)
-Deploy basic EC2 instance(s) with your own private-public key-pair.
+Deploy basic EC2 instance(s) with IPv4 public IP.
 
-## Generate the TLS private-public key-pair
-**Note**: This is for information purpose only and can be ignored.
+## Prerequisites
+Ensure a AWS key-pair resource is already created before proceeding to create EC2 instance.
+To create a AWS key-pair resource, follow: [AWS Key-Pair Management](../key_management/README.md#AWS_Key-Pair_Management).
 
-Generate PEM files using `ssh-keygen` command:
-```
-$ mkdir .ssh
-$ chmod 755 .ssh
-$ ssh-keygen -m PEM -t ed25519 -f .ssh/id_ed25519_aws.pem -P ""
-$ chmod 400 .ssh/id_ed25519_aws.pem
-$ chmod 644 .ssh/id_ed25519_aws.pem.pub
-$ ssh-keygen -y -P "" -f .ssh/id_ed25519_aws.pem    # <= Validate generated key
-$ ls -Al .ssh
-total 2
--r--r--r-- 1 local_user 197121 411 Dec 11 17:08 id_ed25519_aws.pem
--rw-r--r-- 1 local_user 197121 103 Dec 11 17:08 id_ed25519_aws.pem.pub
-```
-
-# Populate user variables
+## Populate user variables
 Copy `user.tfvars` to `user.auto.tfvars`.
 ```
 $ cd ec2
@@ -29,16 +16,14 @@ Update the values of varibles defined in `user.auto.tfvars`.
 Validate the vairable values against the terraform formula using:
 ```
 $ terraform init      # Initialize working directory for Terraform
-
 $ terraform fmt       # Format the Terraform configuration files
 $ terraform validate  # Validate the configuration files in this directory
 ```
 
 ## Create resources
 Perform the following steps using AWS CLI:
-1. Create TLS key-pair entry for ssh login using the local public key from the generated key-pair
-2. Create a new security group in default subnet, in order to allow ssh access to EC2 instance
-3. Create EC2 instance and assign the key-pair as well as the new created security group
+1. Create a new security group in default subnet, in order to allow ssh access to EC2 instance
+2. Create EC2 instance and assign the key-pair as well as the new created security group
 
 **Note**: Remember to assign your public IP (_your Internet Provided IP as seen by AWS_) to the **_my_ip_** variable
 </br>Or
