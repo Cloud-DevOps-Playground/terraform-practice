@@ -34,23 +34,54 @@ jobs:
 
 
     steps:
+
     - uses: actions/checkout@v4
-    - uses: hashicorp/setup-terraform@v3
+
+    - name: Checkout code to flag modifications
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+
+    - name: Check modified files
+      id: check_files
+      run: |
+        echo "=============== list modified files ==============="
+        git diff --name-only HEAD^ HEAD
+
+        echo "========== check paths of modified files =========="
+        git diff --name-only HEAD^ HEAD > files.txt
+        while IFS= read -r file
+        do
+          echo "$file"
+          if [[ $file == /* ]]; then
+            echo "run_job=true" >> $GITHUB_OUTPUT
+          else
+            echo "This modified file is not under the '${{ inputs.workdir }}' folder."
+          fi
+        done < files.txt
+
+    # Setup terraform in workspace
+    - name: Setup Terraform
+      if: ${{ steps.check_files.outputs.run_job == 'true'}}
+      uses: hashicorp/setup-terraform@v3
 
     # Checks that all Terraform configuration files adhere to a canonical format
     - name: Terraform Format
       id: fmt
+      if: ${{ steps.check_files.outputs.run_job == 'true'}}
       run: terraform fmt -check
       continue-on-error: true
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
       id: init
+      if: ${{ steps.check_files.outputs.run_job == 'true'}}
       run: terraform init
 
       # Validates all Terraform configuration files
     - name: Terraform Validate
       id: validate
+      if: ${{ steps.check_files.outputs.run_job == 'true'}}
       run: terraform validate -no-color
 
     # - name: Setup AWS Credentials
@@ -63,5 +94,6 @@ jobs:
     # # Generates an execution plan for Terraform
     # - name: Terraform Plan
     #   id: plan
+    #   if: ${{ steps.check_files.outputs.run_job == 'true'}}
     #   run: terraform plan -no-color -input=false -var "my_ip=192.0.0.1" -var "default_user_password=$(date +%d%h%y-%R)"
     #   continue-on-error: true
