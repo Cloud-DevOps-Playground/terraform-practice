@@ -1,6 +1,6 @@
-output "availabililty_zone" {
-  value = random_integer.az.result
-}
+# output "availabililty_zone" {
+#   value = random_integer.az.result
+# }
 
 output "aws_key_pair_name" {
   value = data.aws_key_pair.ssh_key_pair.key_name

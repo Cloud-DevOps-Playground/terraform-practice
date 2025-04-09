@@ -8,7 +8,7 @@ To create a AWS key-pair resource, follow: [AWS Key-Pair Management](../key_mana
 ## Populate user variables
 Copy `user.tfvars` to `user.auto.tfvars`.
 ```
-$ cd ec2
+$ cd ec2_ipv4
 $ cp user.tfvars user.auto.tfvars
 ```
 
