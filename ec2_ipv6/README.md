@@ -1,5 +1,5 @@
 # Deploy EC2 Instance(s)
-Deploy basic EC2 instance(s) with IPv4 public IP.
+Deploy basic EC2 instance(s) with IPv6 public IP.
 
 ## Prerequisites
 1. Ensure a AWS key-pair resource is already created before proceeding to create EC2 instance.\
@@ -11,7 +11,7 @@ To create a AWS VPC, subnet and security groups for IPv6, follow: [Create IPv6 V
 ## Populate user variables
 *  Copy `user.tfvars` to `user.auto.tfvars`.
     ```bash
-    $ cd vpc
+    $ cd ec2_ipv6
     $ cp user.tfvars user.auto.tfvars
     ```
 

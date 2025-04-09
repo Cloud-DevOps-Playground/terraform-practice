@@ -11,8 +11,11 @@
 # terraform lock file
 .terraform.lock.hcl
 
-#keys
+# keys
 **/*.pem*
 
 # auto.tfvars files used to specify user variables
 **/*.auto.tfvars
+
+# aws creds, if any
+.aws

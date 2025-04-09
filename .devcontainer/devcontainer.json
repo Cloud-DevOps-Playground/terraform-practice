@@ -1,0 +1,39 @@
+{
+    "name": "terraform",
+    "image": "registry.access.redhat.com/ubi9/ubi:latest",
+    "runArgs": [
+        "--rm",
+        // "--network=host",
+        "--name=terraform"
+    ],
+    "privileged": false,
+    // "securityOpt": [
+    //     "seccomp=unconfined",
+    // ],
+    // "capAdd": [
+    //     "SYS_PTRACE",
+    // ],
+    // "mounts": [
+    //     {
+    //         "source": "${localWorkspaceFolder}",
+    //         "target": "/python",
+    //         "type": "bind"
+    //     },
+    // ],
+    "workspaceMount": "source=${localWorkspaceFolder},target=/terraform,type=bind,consistency=cached",
+    "workspaceFolder": "/terraform",
+    "remoteUser": "root",
+    "postStartCommand": "chmod 755 ${containerWorkspaceFolder}/.devcontainer/container_setup.sh && sh ${containerWorkspaceFolder}/.devcontainer/container_setup.sh",
+    "forwardPorts": [],
+    "customizations": {
+        // Configure VSCode specific properties
+        "vscode": {
+            "extensions": [
+                "google.geminicodeassist",
+                "hashicorp.terraform"
+            ],
+            "settings": {}
+        }
+    },
+    "shutdownAction": "stopContainer"
+}

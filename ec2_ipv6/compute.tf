@@ -19,10 +19,10 @@
 #   }
 # }
 
-resource "random_integer" "az" {
-  min = 0
-  max = 2
-}
+# resource "random_integer" "az" {
+#   min = 0
+#   max = 2
+# }
 
 data "aws_availability_zones" "available" {
   state = "available"
@@ -61,7 +61,7 @@ data "aws_vpc_security_group_rule" "ssh_ingress" {
   }
 }
 
-# # TODO: Terraform doesn't allow this resource
+# # Note: Terraform doesn't allow this resource
 # # if associate_public_ip_address is true
 # resource "aws_network_interface" "ipv6_if" {
 #   for_each               = toset(data.aws_subnets.ipv6_subnet.ids)
@@ -85,7 +85,8 @@ data "aws_vpc_security_group_rule" "ssh_ingress" {
 resource "aws_instance" "linux_server" {
   # Instance Basic Setup
   ami               = var.ami_id
-  availability_zone = data.aws_availability_zones.available.names[random_integer.az.result]
+  # availability_zone = data.aws_availability_zones.available.names[random_integer.az.result]
+  availability_zone = data.aws_availability_zones.available.names[0]
   count             = var.ec2_instance_count
   instance_type     = var.ec2_instance_type
   key_name          = data.aws_key_pair.ssh_key_pair.key_name
