@@ -9,12 +9,14 @@ yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.
 yum install -y terraform
 
 # install aws-cli
-cd /tmp
-curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-./aws/install -i /opt/aws/aws-cli -b /usr/local/bin
-/usr/local/bin/aws --version
-rm -rf awscliv2.zip /tmp/aws
+if [[ ! -d "/opt/aws/aws-cli/v2/2.26.2" ]]; then
+  cd /tmp
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+  unzip awscliv2.zip
+  ./aws/install --update -i /opt/aws/aws-cli -b /usr/local/bin
+  /usr/local/bin/aws --version
+  rm -rf awscliv2.zip /tmp/aws
+fi
 
 # Setup aws credentials
-ln -s /terraform/.aws ~/.aws
+[[ ! -L "${HOME}/.aws" ]] && ln -s /terraform/.aws ${HOME}/.aws

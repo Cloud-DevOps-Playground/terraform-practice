@@ -28,10 +28,6 @@ To create a AWS VPC, subnet and security groups for IPv6, follow: [Create IPv6 V
 Perform the following steps using AWS CLI:
 1. Create EC2 instance and assign the key-pair as well as the new created security group
 
-**Note**: Remember to assign your public IP (_your Internet Provided IP as seen by AWS_) to the **_my_ip_** variable
-</br>Or
-</br>just rely on `-var my_ip=$(curl -s -6 ifconfig.info | tr -d [:space:])` as used in command below:
-
 ```bash
 $ terraform plan                    # Generates a speculative execution plan
 $ terraform apply --auto-approve    # Actually create the resources

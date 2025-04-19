@@ -2,7 +2,7 @@
     "name": "terraform",
     "image": "registry.access.redhat.com/ubi9/ubi:latest",
     "runArgs": [
-        "--rm",
+        // "--rm",
         // "--network=host",
         "--name=terraform"
     ],

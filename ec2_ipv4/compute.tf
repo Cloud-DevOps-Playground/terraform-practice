@@ -26,13 +26,18 @@ data "aws_key_pair" "ssh_key_pair" {
   }
 }
 
+data "aws_iam_instance_profile" "s3bucket_read_profile" {
+  name = "s3bucket_iam_instance_profile"
+}
+
 resource "aws_instance" "linux_server" {
   # Basic Instance Setup
   # count           = var.ec2_instance_count
-  ami             = var.ami_id
-  instance_type   = var.ec2_instance_type
-  key_name        = data.aws_key_pair.ssh_key_pair.key_name
-  security_groups = [aws_security_group.allow_ssh.name]
+  ami                  = var.ami_id
+  instance_type        = var.ec2_instance_type
+  key_name             = data.aws_key_pair.ssh_key_pair.key_name
+  security_groups      = [aws_security_group.allow_ssh.name]
+  iam_instance_profile = try(data.aws_iam_instance_profile.s3bucket_read_profile.name, null)
 
   # Provisioning Setup
   user_data = <<-EOF
@@ -65,6 +70,21 @@ resource "aws_instance" "linux_server" {
       "chmod +x /tmp/setup",
       "DEFAULT_USER=root DEFAULT_USER_PASSWORD=\"${var.default_user_password}\" /tmp/setup"
     ]
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/../scripts/download_upload.py"
+    destination = "/tmp/download_upload.py"
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/../scripts/requirements.txt"
+    destination = "/tmp/requirements.txt"
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/../scripts/ec2_based_s3_site_setup.sh"
+    destination = "/tmp/ec2_based_s3_site_setup.sh"
   }
 
   # Resource Tagging
