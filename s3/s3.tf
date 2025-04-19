@@ -1,6 +1,6 @@
-resource "aws_s3_bucket" "example" {
+resource "aws_s3_bucket" "test_bucket" {
   # Bucket name is risky as there can be name conflicts.
-  # bucket              = "example-bucket"
+  # bucket              = "test-bucket-bucket"
 
   #  Hence avoid and use `bucket_prefix`
   bucket_prefix       = var.user_bucket_prefix
@@ -13,8 +13,8 @@ resource "aws_s3_bucket" "example" {
   }
 }
 
-resource "aws_s3_bucket_ownership_controls" "example" {
-  bucket = aws_s3_bucket.example.id
+resource "aws_s3_bucket_ownership_controls" "test_bucket" {
+  bucket = aws_s3_bucket.test_bucket.id
 
   rule {
     # Default rule (https://docs.aws.amazon.com/AmazonS3/latest/userguide/about-object-ownership.html):
@@ -28,14 +28,14 @@ resource "aws_s3_bucket_ownership_controls" "example" {
 }
 
 # Since ACLs are disabled in block above, this block is useless
-# resource "aws_s3_bucket_acl" "example" {
-#   depends_on = [aws_s3_bucket_ownership_controls.example]
-#   bucket     = aws_s3_bucket.example.id
+# resource "aws_s3_bucket_acl" "test_bucket" {
+#   depends_on = [aws_s3_bucket_ownership_controls.test_bucket]
+#   bucket     = aws_s3_bucket.test_bucket.id
 #   acl        = "private"
 # }
 
-resource "aws_s3_bucket_public_access_block" "example" {
-  bucket = aws_s3_bucket.example.id
+resource "aws_s3_bucket_public_access_block" "test_bucket" {
+  bucket = aws_s3_bucket.test_bucket.id
 
   block_public_acls       = true
   ignore_public_acls      = true
@@ -43,15 +43,15 @@ resource "aws_s3_bucket_public_access_block" "example" {
   restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket_versioning" "versioning_example" {
-  bucket = aws_s3_bucket.example.id
+resource "aws_s3_bucket_versioning" "versioning_test_bucket" {
+  bucket = aws_s3_bucket.test_bucket.id
   versioning_configuration {
     status = "Disabled"
   }
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "example" {
-  bucket = aws_s3_bucket.example.id
+resource "aws_s3_bucket_server_side_encryption_configuration" "test_bucket" {
+  bucket = aws_s3_bucket.test_bucket.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -61,8 +61,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "example" {
   }
 }
 
-resource "aws_s3_bucket_lifecycle_configuration" "example" {
-  bucket = aws_s3_bucket.example.id
+resource "aws_s3_bucket_lifecycle_configuration" "test_bucket" {
+  bucket = aws_s3_bucket.test_bucket.id
 
   rule {
     id = "janitor"

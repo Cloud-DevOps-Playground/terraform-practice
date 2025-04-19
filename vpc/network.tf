@@ -23,7 +23,6 @@ resource "aws_subnet" "ipv6_subnet" {
 
   availability_zone = data.aws_availability_zones.available.names[0]
 
-  # The below fails as 10.20.30.1/32 is not allowed - First 4 and last 1 IPs are reserved by AWS
   cidr_block = cidrsubnet(aws_vpc.ipv6_vpc.cidr_block, 4, 0)
 
   assign_ipv6_address_on_creation = true

@@ -61,6 +61,10 @@ data "aws_vpc_security_group_rule" "ssh_ingress" {
   }
 }
 
+# data "aws_iam_instance_profile" "s3bucket_profile" {
+#   name = "s3bucket_iam_instance_profile"
+# }
+
 # # Note: Terraform doesn't allow this resource
 # # if associate_public_ip_address is true
 # resource "aws_network_interface" "ipv6_if" {
@@ -84,7 +88,7 @@ data "aws_vpc_security_group_rule" "ssh_ingress" {
 
 resource "aws_instance" "linux_server" {
   # Instance Basic Setup
-  ami               = var.ami_id
+  ami = var.ami_id
   # availability_zone = data.aws_availability_zones.available.names[random_integer.az.result]
   availability_zone = data.aws_availability_zones.available.names[0]
   count             = var.ec2_instance_count
@@ -111,8 +115,8 @@ resource "aws_instance" "linux_server" {
   # associate_public_ip_address = false
 
   # Storage Setup
-  # Uncomment if using S3 bucket
-  # iam_instance_profile = aws_iam_instance_profile.s3bucket_read_profile.name
+  # Uncomment if using S3 bucket with defined IAM role & policy
+  # iam_instance_profile = try(data.aws_iam_instance_profile.s3bucket_profile.name, null)
 
   # Lifecycle Setup
   lifecycle {
@@ -138,6 +142,7 @@ resource "aws_instance" "linux_server" {
     private_key = file("${path.module}/../key_management/${data.aws_key_pair.ssh_key_pair.key_name}.pem")
     host        = element(self.ipv6_addresses, 0)
     port        = data.aws_vpc_security_group_rule.ssh_ingress.to_port
+    agent       = false
   }
 
   provisioner "file" {

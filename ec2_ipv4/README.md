@@ -7,14 +7,14 @@ To create a AWS key-pair resource, follow: [AWS Key-Pair Management](../key_mana
 
 ## Populate user variables
 Copy `user.tfvars` to `user.auto.tfvars`.
-```
+```shell
 $ cd ec2_ipv4
 $ cp user.tfvars user.auto.tfvars
 ```
 
 Update the values of varibles defined in `user.auto.tfvars`.
 Validate the vairable values against the terraform formula using:
-```
+```shell
 $ terraform init      # Initialize working directory for Terraform
 $ terraform fmt       # Format the Terraform configuration files
 $ terraform validate  # Validate the configuration files in this directory
@@ -29,28 +29,28 @@ Perform the following steps using AWS CLI:
 </br>Or
 </br>just rely on `-var my_ip=$(curl -s -4 ifconfig.info | tr -d [:space:])` as used in command below:
 
-```
+```shell
 $ terraform plan -var my_ip=$(curl -s -4 ifconfig.info | tr -d [:space:])                   # Generates a speculative execution plan
-$ terraform apply --auto-approve -var my_ip=$(curl -s -4 ifconfig.info | tr -d [:space:])   # Actually create the resources
+$ terraform apply -auto-approve -compact-warnings -var my_ip=$(curl -s -4 ifconfig.info | tr -d [:space:])   # Actually create the resources
 ```
 
 ## Destroy resources
 Cleanup all the resources created by the `apply` command in previous step.
-```
-$ terraform destroy --auto-approve -var my_ip=$(curl -s -4 ifconfig.info | tr -d [:space:])
+```shell
+$ terraform destroy -auto-approve -var my_ip=$(curl -s -4 ifconfig.info | tr -d [:space:])
 ```
 
 ## Connect to AWS
 **Note**: If ssh port is modified using `ssh_port` variable, ensure it is appropriately set in ssh commands below.
 
 (Assuming AMI default user to be **ec2-user**.)
-```
+```shell
 $ ssh -p <CUSTOM_SSH_PORT> -i id_ed25519_aws.pem -l ec2-user $(terraform output -raw instance_public_dns)
 ```
 
 **Tip**: If you don't know the user, try logging in as root. This would suggest the preferred login user as shown here:
 
-```
+```shell
 $ ssh -p <CUSTOM_SSH_PORT> -i id_ed25519_aws.pem -l root $(terraform output -raw instance_public_dns)
 Please login as the user "ec2-user" rather than the user "root".
 

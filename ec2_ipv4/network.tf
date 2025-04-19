@@ -22,7 +22,7 @@ resource "aws_vpc_security_group_ingress_rule" "security_group_ingress_rule" {
 
   cidr_ipv4   = "${var.my_ip}/32"
   from_port   = var.ssh_port
-  to_port     = var.ssh_port
+  to_port     = 5000
   ip_protocol = "tcp"
 }
 
