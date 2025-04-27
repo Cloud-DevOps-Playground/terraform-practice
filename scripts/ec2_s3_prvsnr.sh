@@ -19,7 +19,7 @@ function cleanup() {
 
 function pre_deploy_ops() {
   terraform init
-  terraform fmt --check
+  terraform fmt -check
   terraform validate
 }
 

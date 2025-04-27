@@ -35,7 +35,7 @@ data "aws_key_pair" "ssh_key_pair" {
   }
 }
 
-data "aws_subnets" "ipv6_subnet" {
+data "aws_subnets" "ip_subnet" {
   filter {
     name   = "tag:Name"
     values = ["${var.tag_name}"]
@@ -68,9 +68,9 @@ data "aws_vpc_security_group_rule" "ssh_ingress" {
 # # Note: Terraform doesn't allow this resource
 # # if associate_public_ip_address is true
 # resource "aws_network_interface" "ipv6_if" {
-#   for_each               = toset(data.aws_subnets.ipv6_subnet.ids)
+#   for_each               = toset(data.aws_subnets.ip_subnet.ids)
 #   subnet_id              = each.value
-#   # subnet_id           = data.aws_subnet.ipv6_subnet.id
+#   # subnet_id           = data.aws_subnet.ip_subnet.id
 #   enable_primary_ipv6 = true
 #   ipv6_address_count  = 1
 #   security_groups     = [data.aws_security_groups.allow_ssh.id]
@@ -104,11 +104,11 @@ resource "aws_instance" "linux_server" {
 
   depends_on = [
     data.aws_key_pair.ssh_key_pair,
-    data.aws_subnets.ipv6_subnet
+    data.aws_subnets.ip_subnet
   ]
   enable_primary_ipv6    = true
   ipv6_address_count     = 1
-  subnet_id              = element(data.aws_subnets.ipv6_subnet.ids, 0)
+  subnet_id              = element(data.aws_subnets.ip_subnet.ids, 0)
   vpc_security_group_ids = data.aws_security_groups.allow_ssh.ids
 
   # TODO: Understand why these values don't work?

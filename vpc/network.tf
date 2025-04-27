@@ -6,7 +6,7 @@ data "aws_availability_zones" "available" {
 }
 
 resource "aws_vpc" "ipv6_vpc" {
-  cidr_block                           = "10.20.30.0/24"
+  cidr_block                           = "10.0.1.0/24"
   assign_generated_ipv6_cidr_block     = true
   enable_dns_support                   = true
   enable_dns_hostnames                 = true
@@ -18,7 +18,7 @@ resource "aws_vpc" "ipv6_vpc" {
   }
 }
 
-resource "aws_subnet" "ipv6_subnet" {
+resource "aws_subnet" "ip_subnet" {
   vpc_id = aws_vpc.ipv6_vpc.id
 
   availability_zone = data.aws_availability_zones.available.names[0]
@@ -28,17 +28,17 @@ resource "aws_subnet" "ipv6_subnet" {
   assign_ipv6_address_on_creation = true
   ipv6_cidr_block                 = cidrsubnet(aws_vpc.ipv6_vpc.ipv6_cidr_block, 8, 1)
 
-  # TODO: Understand why this values doesn't work?
-  # ipv6_native                     = true
+  # Cannot be specified when IPv4 is declared
+  # ipv6_native = true
 
-  map_public_ip_on_launch = false
+  map_public_ip_on_launch = true
 
   tags = {
     Name = var.tag_name
   }
 }
 
-resource "aws_internet_gateway" "ipv6_gw" {
+resource "aws_internet_gateway" "ip_gw" {
   # This parameter takes care of InternetGateway attachment to VPC
   vpc_id = aws_vpc.ipv6_vpc.id
 
@@ -49,16 +49,26 @@ resource "aws_internet_gateway" "ipv6_gw" {
 
 # This is taken care of in aws_internet_gateway by passing vpc_id
 # resource "aws_internet_gateway_attachment" "ipv6_gw_attachment" {
-#   internet_gateway_id = aws_internet_gateway.ipv6_gw.id
+#   internet_gateway_id = aws_internet_gateway.ip_gw.id
 #   vpc_id              = aws_vpc.ipv6_vpc.id
 # }
 
-resource "aws_route_table" "ipv6_route_table" {
+resource "aws_route_table" "ip_routing_table" {
   vpc_id = aws_vpc.ipv6_vpc.id
 
   route {
+    cidr_block = aws_vpc.ipv6_vpc.cidr_block
+    gateway_id = "local"
+  }
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.ip_gw.id
+  }
+
+  route {
     ipv6_cidr_block = "::/0"
-    gateway_id      = aws_internet_gateway.ipv6_gw.id
+    gateway_id      = aws_internet_gateway.ip_gw.id
   }
 
   route {
@@ -71,9 +81,9 @@ resource "aws_route_table" "ipv6_route_table" {
   }
 }
 
-resource "aws_route_table_association" "ipv6_rt_association" {
-  route_table_id = aws_route_table.ipv6_route_table.id
-  subnet_id      = aws_subnet.ipv6_subnet.id
+resource "aws_route_table_association" "subnet_routetable_association" {
+  route_table_id = aws_route_table.ip_routing_table.id
+  subnet_id      = aws_subnet.ip_subnet.id
 }
 
 resource "aws_security_group" "allow_ssh" {
