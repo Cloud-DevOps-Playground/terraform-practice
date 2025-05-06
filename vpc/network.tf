@@ -57,18 +57,18 @@ resource "aws_route_table" "ip_routing_table" {
   vpc_id = aws_vpc.ipv6_vpc.id
 
   route {
-    cidr_block = aws_vpc.ipv6_vpc.cidr_block
-    gateway_id = "local"
-  }
-
-  route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.ip_gw.id
+    gateway_id = aws_internet_gateway.ipv6_gw.id
   }
 
   route {
     ipv6_cidr_block = "::/0"
-    gateway_id      = aws_internet_gateway.ip_gw.id
+    gateway_id      = aws_internet_gateway.ipv6_gw.id
+  }
+
+  route {
+    cidr_block = aws_vpc.ipv6_vpc.cidr_block
+    gateway_id = "local"
   }
 
   route {
@@ -112,11 +112,23 @@ resource "aws_vpc_security_group_ingress_rule" "security_group_ingress_rule" {
   }
 }
 
-resource "aws_vpc_security_group_egress_rule" "security_group_egress_rule" {
+resource "aws_vpc_security_group_egress_rule" "security_group_egress_rule_ipv6" {
   security_group_id = aws_security_group.allow_ssh.id
   description       = "Security group egress rule."
 
   cidr_ipv6   = "::/0"
+  ip_protocol = "-1"
+
+  tags = {
+    Name = var.tag_name
+  }
+}
+
+resource "aws_vpc_security_group_egress_rule" "security_group_egress_rule_ipv4" {
+  security_group_id = aws_security_group.allow_ssh.id
+  description       = "Security group egress rule."
+
+  cidr_ipv4   = "0.0.0.0/0"
   ip_protocol = "-1"
 
   tags = {

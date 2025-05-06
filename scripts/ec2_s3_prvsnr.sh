@@ -1,8 +1,8 @@
-#!/usr/bin/env bash
+#!/usr/bin/bash
 set -e
 
-# SERVICES=("/terraform/key_management" "/terraform/vpc" "/terraform/s3" "/terraform/iam" "/terraform/ec2_ipv6")
-SERVICES=("/terraform/key_management" "/terraform/s3" "/terraform/iam" "/terraform/ec2_ipv4")
+SERVICES=("/terraform/key_management" "/terraform/vpc" "/terraform/s3" "/terraform/iam" "/terraform/ec2_ipv6")
+# SERVICES=("/terraform/key_management" "/terraform/s3" "/terraform/iam" "/terraform/ec2_ipv4")
 
 trap '
   cleanup
