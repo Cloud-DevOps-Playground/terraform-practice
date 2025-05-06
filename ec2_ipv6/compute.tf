@@ -111,8 +111,9 @@ resource "aws_instance" "linux_server" {
   subnet_id              = element(data.aws_subnets.ip_subnet.ids, 0)
   vpc_security_group_ids = data.aws_security_groups.allow_ssh.ids
 
-  # TODO: Understand why these values don't work?
+  # Set this to true if you want IPv6 + IPv4 internet connectivity
   # associate_public_ip_address = false
+  associate_public_ip_address = true
 
   # Storage Setup
   # Uncomment if using S3 bucket with defined IAM role & policy

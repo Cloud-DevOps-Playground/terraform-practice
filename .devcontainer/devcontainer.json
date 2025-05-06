@@ -3,7 +3,7 @@
     "image": "registry.access.redhat.com/ubi9/ubi:latest",
     "runArgs": [
         // "--rm",
-        // "--network=host",
+        "--network=host",
         "--name=terraform"
     ],
     "privileged": false,
