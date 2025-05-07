@@ -58,12 +58,12 @@ resource "aws_route_table" "ip_routing_table" {
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.ipv6_gw.id
+    gateway_id = aws_internet_gateway.ip_gw.id
   }
 
   route {
     ipv6_cidr_block = "::/0"
-    gateway_id      = aws_internet_gateway.ipv6_gw.id
+    gateway_id      = aws_internet_gateway.ip_gw.id
   }
 
   route {

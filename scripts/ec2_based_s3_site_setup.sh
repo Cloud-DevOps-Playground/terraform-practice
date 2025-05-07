@@ -17,7 +17,11 @@ function cleanup() {
 function setup_mount_s3() {
   # Step1: Install utility
   # Reference: Installation - https://docs.aws.amazon.com/AmazonS3/latest/userguide/mountpoint-installation.html
-  sudo yum install --assumeyes https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm
+
+  sudo yum list --installed | grep -o mount-s3
+  if [[ $? != 0 ]]; then
+    sudo yum install --assumeyes https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm
+  fi
 
   # Step2: Verify installation
   mount-s3 --version
@@ -25,11 +29,12 @@ function setup_mount_s3() {
 
   # Step3: Mount
   # Reference: Mount - https://docs.aws.amazon.com/AmazonS3/latest/userguide/mountpoint-usage.html
-  sudo mkdir -p /mnt/s3fs-bucket
-  read -t60 -p "Provide the s3 bucket name to mount: " s3_bucket_name
-  if sudo mountpoint /mnt/s3fs-bucket; then
+  [[ -d /mnt/s3fs-bucket ]] || sudo mkdir -p /mnt/s3fs-bucket
+
+  if sudo mountpoint /mnt/s3fs-bucket >/dev/null; then
     echo "Mount exists for directory /mnt/s3fs-bucket"
   else
+    read -t60 -p "Provide the s3 bucket name to mount: " s3_bucket_name
     echo "Mounting bucket ${s3_bucket_name} to /mnt/s3fs-bucket"
     sudo mount-s3 ${s3_bucket_name} /mnt/s3fs-bucket
   fi
@@ -102,3 +107,5 @@ function auth_mod_setup() {
   python3.12 -m ensurepip --upgrade
   python3.12 -m pip install --upgrade pip flask flask-jwt-extended flask_wtf python-dotenv requests
 }
+
+# setup_mount_s3
