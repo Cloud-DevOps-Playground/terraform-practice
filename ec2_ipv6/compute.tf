@@ -61,6 +61,7 @@ data "aws_vpc_security_group_rule" "ssh_ingress" {
   }
 }
 
+# Uncomment, if attaching to S3 bucket (line 121)
 # data "aws_iam_instance_profile" "s3bucket_profile" {
 #   name = "s3bucket_iam_instance_profile"
 # }
@@ -151,10 +152,21 @@ resource "aws_instance" "linux_server" {
     destination = "/tmp/setup"
   }
 
+  provisioner "file" {
+    source      = "${path.module}/../scripts/ec2_based_s3_site_setup.sh"
+    destination = "/tmp/ec2_based_s3_site_setup.sh"
+  }
+
   provisioner "remote-exec" {
     inline = [
       "chmod +x /tmp/setup",
       "DEFAULT_USER=root DEFAULT_USER_PASSWORD=\"${var.default_user_password}\" /tmp/setup"
+    ]
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/ec2_based_s3_site_setup.sh"
     ]
   }
 
