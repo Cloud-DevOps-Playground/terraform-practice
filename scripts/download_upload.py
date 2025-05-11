@@ -343,4 +343,4 @@ if __name__ == '__main__':
     # Use host='0.0.0.0' to make it accessible on your network
     # debug=True is useful for development, but should be False in production
     # Ensure debug is False if secure=True is used for cookies
-    app.run(host='0.0.0.0', port=5000, debug=True) # Set debug=False for production
+    app.run(host='0.0.0.0', port=80, debug=True) # Set debug=False for production
