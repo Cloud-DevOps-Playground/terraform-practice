@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+# set -e
 
 trap '
   cleanup
@@ -18,6 +18,8 @@ function setup_mount_s3() {
   # Step1: Install utility
   # Reference: Installation - https://docs.aws.amazon.com/AmazonS3/latest/userguide/mountpoint-installation.html
 
+  sudo yum clean all
+  sudo yum update -y
   sudo yum list --installed | grep -o mount-s3
   if [[ $? != 0 ]]; then
     sudo yum install --assumeyes https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm
@@ -105,7 +107,8 @@ function auth_mod_setup() {
 
   # Setup oauth using Python flask
   python3.12 -m ensurepip --upgrade
-  python3.12 -m pip install --upgrade pip flask flask-jwt-extended flask_wtf python-dotenv requests
+  python3.12 -m pip install --upgrade pip -r requirements.txt
 }
 
-# setup_mount_s3
+setup_mount_s3
+auth_mod_setup

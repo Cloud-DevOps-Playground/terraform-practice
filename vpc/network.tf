@@ -103,7 +103,7 @@ resource "aws_vpc_security_group_ingress_rule" "security_group_ingress_rule" {
   # cidr_ipv6 = aws_vpc.ipv6_vpc.ipv6_cidr_block
   cidr_ipv6   = "${var.my_ip}/128"
   from_port   = var.ssh_port
-  to_port     = var.ssh_port
+  to_port     = 80
   ip_protocol = "tcp"
 
   tags = {

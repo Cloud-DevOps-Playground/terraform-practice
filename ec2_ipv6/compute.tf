@@ -147,26 +147,21 @@ resource "aws_instance" "linux_server" {
     agent       = false
   }
 
-  provisioner "file" {
-    source      = "${path.module}/../scripts/amazon_linux_2023_setup.sh"
-    destination = "/tmp/setup"
-  }
-
-  provisioner "file" {
-    source      = "${path.module}/../scripts/ec2_based_s3_site_setup.sh"
-    destination = "/tmp/ec2_based_s3_site_setup.sh"
-  }
-
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /tmp/setup",
-      "DEFAULT_USER=root DEFAULT_USER_PASSWORD=\"${var.default_user_password}\" /tmp/setup"
+      "mkdir -p /tmp/setup"
     ]
   }
 
+  provisioner "file" {
+    source      = "${path.module}/../scripts/"
+    destination = "/tmp/setup"
+  }
+
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /tmp/ec2_based_s3_site_setup.sh"
+      "chmod -R +x /tmp/setup",
+      "DEFAULT_USER=root DEFAULT_USER_PASSWORD=\"${var.default_user_password}\" /tmp/setup/amazon_linux_2023_setup.sh"
     ]
   }
 
