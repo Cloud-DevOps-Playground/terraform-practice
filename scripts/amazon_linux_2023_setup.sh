@@ -7,28 +7,34 @@ if [ $(whoami) == root ];then
 	exit
 fi
 
-# echo -e "${DEFAULT_USER_PASSWORD}" | sudo passwd ${DEFAULT_USER} --stdin
-
 readonly CUSTOM_PROFILE=custom_profile_file
 # Custom profile for user shell.
 # User login profile based hardening
 echo "HISTCONTROL=ignoreboth" | sudo tee /etc/profile.d/${CUSTOM_PROFILE}.sh
 
-# This doesn't work for non-privileged users
-echo '[ "root" != "$USER" -a -n "$SSH_TTY" ] \
-	&& sudo journalctl _SYSTEMD_UNIT=sshd.service -n 1 --grep "Accepted publickey for $USER from" -o cat \
-	&& wall "Logged in as non-root user: $USER"' | sudo tee -a /etc/profile.d/${CUSTOM_PROFILE}.sh
+# # This doesn't work for non-privileged users
+# echo '[ "root" != "$USER" -a -n "$SSH_TTY" ] \
+# 	&& sudo journalctl _SYSTEMD_UNIT=sshd.service -n 1 --grep "Accepted publickey for $USER from" -o cat \
+# 	&& wall "Logged in as non-root user: $USER"' | sudo tee -a /etc/profile.d/${CUSTOM_PROFILE}.sh
 
-# Terminate user session if user logs in using password instead of a public-key
-echo '[ "root" == "$USER" -a -n "$SSH_TTY" ] \
-	&& sudo journalctl _SYSTEMD_UNIT=sshd.service -n 1 --grep "Accepted password for $USER from" -o cat \
-	&& ( \
-		wall "ALERT!:  Someone attempted ssh login as root user. Terminating root user session(s) for security..."; \
-		pkill -KILL -u root\
-	)' | sudo tee -a /etc/profile.d/${CUSTOM_PROFILE}.sh
+# # Terminate user session if user logs in using password instead of a public-key
+# echo '[ "root" == "$USER" -a -n "$SSH_TTY" ] \
+# 	&& sudo journalctl _SYSTEMD_UNIT=sshd.service -n 1 --grep "Accepted password for $USER from" -o cat \
+# 	&& ( \
+# 		wall "ALERT!:  Someone attempted ssh login as root user. Terminating root user session(s) for security..."; \
+# 		pkill -KILL -u root\
+# 	)' | sudo tee -a /etc/profile.d/${CUSTOM_PROFILE}.sh
 
 # Update system packages
-sudo dnf update -y && sudo dnf clean all
+if [[ "debian" == "$(grep -E "^ID_LIKE=" /etc/os-release | cut -d '=' -f 2 | tr -d '"')" ]]; then
+	echo "${DEFAULT_USER}:${DEFAULT_USER_PASSWORD}" | sudo chpasswd
+	sudo apt update && sudo apt upgrade -y && sudo apt autoclean && sudo apt autoremove
+elif [[ "fedora" == "$(grep -E "^ID_LIKE=" /etc/os-release | cut -d '=' -f 2 | tr -d '"')" ]]; then
+	echo -e "${DEFAULT_USER_PASSWORD}" | sudo passwd ${DEFAULT_USER} --stdin
+	sudo dnf update -y && sudo dnf upgrade -y && sudo dnf autoremove && sudo dnf clean all
+else
+	echo "INFO: Unidentified OS family"
+fi
 
 # Setup for S3 bucket mount
 # wget https://s3.amazonaws.com/mountpoint-s3-release/latest/$(uname -p)/mount-s3.rpm

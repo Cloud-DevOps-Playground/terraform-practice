@@ -1,5 +1,6 @@
 ami_id                = "<AMI ID>"
 aws_region            = "<AWS REGION>"
+default_user          = "<Update the default user as per the selected AMI>"
 default_user_password = "<Update the default user password for OS hardening>"
 ec2_instance_count    = "<NUMBER OF EC2 INSTANCES TO SPIN UP>"
 ec2_instance_type     = "<TYPE OF EC2 INSTANCE>"
