@@ -1,8 +1,9 @@
 #!/usr/bin/bash
 set -e
 
-SERVICES=("/terraform/key_management" "/terraform/vpc" "/terraform/s3" "/terraform/iam" "/terraform/ec2_ipv6")
+# SERVICES=("/terraform/key_management" "/terraform/vpc" "/terraform/s3" "/terraform/iam" "/terraform/ec2_ipv6")
 # SERVICES=("/terraform/key_management" "/terraform/s3" "/terraform/iam" "/terraform/ec2_ipv4")
+SERVICES=("/terraform/key_management" "/terraform/ec2_ipv4")
 
 trap '
   cleanup
@@ -19,14 +20,14 @@ function cleanup() {
 
 function pre_deploy_ops() {
   terraform init
-  terraform fmt -check
+  terraform fmt
   terraform validate
 }
 
 
 function deploy() {
   for service in ${SERVICES[@]}; do
-    echo "Processing service: $service"
+    echo -e "\033[1mProcessing service:\033[0m $service"
     sleep 15
     pushd ${service}
       pre_deploy_ops

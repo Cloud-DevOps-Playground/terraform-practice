@@ -10,6 +10,12 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "default_user" {
+  description = "Default EC2 instance user"
+  type        = string
+  default     = "ec2-user"
+}
+
 variable "default_user_password" {
   description = "Password for default user"
   ephemeral   = true

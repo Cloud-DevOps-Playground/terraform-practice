@@ -36,7 +36,7 @@ resource "aws_instance" "linux_server" {
   ami             = var.ami_id
   instance_type   = var.ec2_instance_type
   key_name        = data.aws_key_pair.ssh_key_pair.key_name
-  security_groups = [aws_security_group.allow_ssh.name]
+  security_groups = [aws_security_group.allow_traffic.name]
   # iam_instance_profile = try(data.aws_iam_instance_profile.s3bucket_profile.name, null)
 
   # Provisioning Setup
@@ -48,12 +48,18 @@ resource "aws_instance" "linux_server" {
         echo 'Port ${var.ssh_port}' > /etc/ssh/sshd_config.d/${var.tag_name}.conf
         echo 'PermitRootLogin no' >> /etc/ssh/sshd_config.d/${var.tag_name}.conf
         echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config.d/${var.tag_name}.conf
-        systemctl restart sshd
+        if [[ "debian" == "$(grep -E "^ID_LIKE=" /etc/os-release | cut -d '=' -f 2 | tr -d '"')" ]]; then
+          systemctl restart ssh
+        elif [[ "fedora" == "$(grep -E "^ID_LIKE=" /etc/os-release | cut -d '=' -f 2 | tr -d '"')" ]]; then
+          systemctl restart sshd
+        else
+          echo "INFO: Unidentified OS family"
+        fi
   EOF
 
   connection {
     type = "ssh"
-    user = "ec2-user"
+    user = var.default_user
     # private_key = tls_private_key.ssh_key.private_key_pem
     private_key = file("${path.module}/../key_management/${data.aws_key_pair.ssh_key_pair.key_name}.pem")
     host        = aws_instance.linux_server.public_ip

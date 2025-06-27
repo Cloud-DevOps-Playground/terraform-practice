@@ -42,7 +42,7 @@ data "aws_subnets" "ip_subnet" {
   }
 }
 
-data "aws_security_groups" "allow_ssh" {
+data "aws_security_groups" "allow_traffic" {
   filter {
     name   = "tag:Name"
     values = ["${var.tag_name}"]
@@ -57,9 +57,22 @@ data "aws_vpc_security_group_rule" "ssh_ingress" {
 
   filter {
     name   = "tag:Type"
-    values = ["custom_ssh_port"]
+    values = ["ssh_port_ingress"]
   }
 }
+
+# # Not used. Hence commented.
+# data "aws_vpc_security_group_rule" "custom_port_ingress" {
+#   filter {
+#     name   = "tag:Name"
+#     values = ["${var.tag_name}"]
+#   }
+
+#   filter {
+#     name   = "tag:Type"
+#     values = ["custom_port_ingress"]
+#   }
+# }
 
 # Uncomment, if attaching to S3 bucket (line 121)
 # data "aws_iam_instance_profile" "s3bucket_profile" {
@@ -74,7 +87,7 @@ data "aws_vpc_security_group_rule" "ssh_ingress" {
 #   # subnet_id           = data.aws_subnet.ip_subnet.id
 #   enable_primary_ipv6 = true
 #   ipv6_address_count  = 1
-#   security_groups     = [data.aws_security_groups.allow_ssh.id]
+#   security_groups     = [data.aws_security_groups.allow_traffic.id]
 #   # private_ips = ["172.16.10.100"]
 
 #   # attachment {
@@ -110,7 +123,7 @@ resource "aws_instance" "linux_server" {
   enable_primary_ipv6    = true
   ipv6_address_count     = 1
   subnet_id              = element(data.aws_subnets.ip_subnet.ids, 0)
-  vpc_security_group_ids = data.aws_security_groups.allow_ssh.ids
+  vpc_security_group_ids = data.aws_security_groups.allow_traffic.ids
 
   # Set this to true if you want IPv6 + IPv4 internet connectivity
   # associate_public_ip_address = false
@@ -135,7 +148,13 @@ resource "aws_instance" "linux_server" {
         echo 'Port "${data.aws_vpc_security_group_rule.ssh_ingress.to_port}"' > /etc/ssh/sshd_config.d/${var.tag_name}.conf
         echo 'PermitRootLogin no' >> /etc/ssh/sshd_config.d/${var.tag_name}.conf
         echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config.d/${var.tag_name}.conf
-        systemctl restart sshd
+        if [[ "debian" == "$(grep -E "^ID_LIKE=" /etc/os-release | cut -d '=' -f 2 | tr -d '"')" ]]; then
+          systemctl restart ssh
+        elif [[ "fedora" == "$(grep -E "^ID_LIKE=" /etc/os-release | cut -d '=' -f 2 | tr -d '"')" ]]; then
+          systemctl restart sshd
+        else
+          echo "INFO: Unidentified OS family"
+        fi
   EOT
 
   connection {

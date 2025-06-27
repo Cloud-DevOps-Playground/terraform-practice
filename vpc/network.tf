@@ -86,8 +86,8 @@ resource "aws_route_table_association" "subnet_routetable_association" {
   subnet_id      = aws_subnet.ip_subnet.id
 }
 
-resource "aws_security_group" "allow_ssh" {
-  name        = "allow_ssh"
+resource "aws_security_group" "allow_traffic" {
+  name        = "allow_traffic"
   description = "Security group to allow ssh traffic."
   vpc_id      = aws_vpc.ipv6_vpc.id
 
@@ -96,24 +96,40 @@ resource "aws_security_group" "allow_ssh" {
   }
 }
 
-resource "aws_vpc_security_group_ingress_rule" "security_group_ingress_rule" {
-  security_group_id = aws_security_group.allow_ssh.id
+resource "aws_vpc_security_group_ingress_rule" "allow_ssh_port" {
+  security_group_id = aws_security_group.allow_traffic.id
   description       = "Security group ingress rule for ssh connectivity."
 
   # cidr_ipv6 = aws_vpc.ipv6_vpc.ipv6_cidr_block
   cidr_ipv6   = "${var.my_ip}/128"
   from_port   = var.ssh_port
-  to_port     = 80
+  to_port     = var.ssh_port
   ip_protocol = "tcp"
 
   tags = {
     Name = var.tag_name
-    Type = "custom_ssh_port"
+    Type = "ssh_port_ingress"
   }
 }
 
+# resource "aws_vpc_security_group_ingress_rule" "allow_custom_port" {
+#   security_group_id = aws_security_group.allow_traffic.id
+#   description       = "Security group ingress rule for custom port connectivity."
+
+#   # cidr_ipv6 = aws_vpc.ipv6_vpc.ipv6_cidr_block
+#   cidr_ipv6   = "${var.my_ip}/128"
+#   from_port   = 8080
+#   to_port     = 8080
+#   ip_protocol = "tcp"
+
+#   tags = {
+#     Name = var.tag_name
+#     Type = "custom_port_ingress"
+#   }
+# }
+
 resource "aws_vpc_security_group_egress_rule" "security_group_egress_rule_ipv6" {
-  security_group_id = aws_security_group.allow_ssh.id
+  security_group_id = aws_security_group.allow_traffic.id
   description       = "Security group egress rule."
 
   cidr_ipv6   = "::/0"
@@ -125,7 +141,7 @@ resource "aws_vpc_security_group_egress_rule" "security_group_egress_rule_ipv6" 
 }
 
 resource "aws_vpc_security_group_egress_rule" "security_group_egress_rule_ipv4" {
-  security_group_id = aws_security_group.allow_ssh.id
+  security_group_id = aws_security_group.allow_traffic.id
   description       = "Security group egress rule."
 
   cidr_ipv4   = "0.0.0.0/0"
