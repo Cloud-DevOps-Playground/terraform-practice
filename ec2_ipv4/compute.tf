@@ -19,23 +19,27 @@
 #   }
 # }
 
-data "aws_key_pair" "ssh_key_pair" {
-  filter {
-    name   = "tag:Name"
-    values = [var.tag_name]
-  }
-}
+# data "aws_key_pair" "ssh_key_pair" {
+#   filter {
+#     name   = "tag:Name"
+#     values = [var.tag_name]
+#   }
+# }
+// Use key-pair created by the key_management module
 
 # data "aws_iam_instance_profile" "s3bucket_profile" {
 #   name = "s3bucket_iam_instance_profile"
 # }
 
 resource "aws_instance" "linux_server" {
+  # Ensure the module finished writing the PEM file before creating the instance
+  depends_on = [module.key_management]
   # Basic Instance Setup
-  # count           = var.ec2_instance_count
-  ami             = var.ami_id
-  instance_type   = var.ec2_instance_type
-  key_name        = data.aws_key_pair.ssh_key_pair.key_name
+  count           = var.ec2_instance_count
+  ami           = var.ami_id
+  instance_type = var.ec2_instance_type
+  # key_name        = data.aws_key_pair.ssh_key_pair.key_name
+  key_name        = module.key_management.ssh_key_name
   security_groups = [aws_security_group.allow_traffic.name]
   # iam_instance_profile = try(data.aws_iam_instance_profile.s3bucket_profile.name, null)
 
@@ -58,12 +62,12 @@ resource "aws_instance" "linux_server" {
   EOF
 
   connection {
-    type = "ssh"
-    user = var.default_user
-    # private_key = tls_private_key.ssh_key.private_key_pem
-    private_key = file("${path.module}/../key_management/${data.aws_key_pair.ssh_key_pair.key_name}.pem")
-    host        = aws_instance.linux_server.public_ip
+    type        = "ssh"
+    user        = var.default_user
+    private_key = module.key_management.ssh_private_key
+    host        = self.public_ip
     port        = var.ssh_port
+    agent       = false
   }
 
   provisioner "file" {

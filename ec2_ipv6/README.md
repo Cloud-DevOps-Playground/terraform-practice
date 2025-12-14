@@ -3,7 +3,7 @@ Deploy basic EC2 instance(s) with IPv6 public IP.
 
 ## Prerequisites
 1. Ensure a AWS key-pair resource is already created before proceeding to create EC2 instance.\
-To create a AWS key-pair resource, follow [AWS Key-Pair Management](../key_management/README.md#AWS_Key-Pair_Management).
+To create a AWS key-pair resource, follow [AWS Key-Pair Management](../modules/key_management/README.md#AWS_Key-Pair_Management).
 
 2. Ensure the AWS VPC, subnet and security groups for IPv6 subnet are created.
 To create a AWS VPC, subnet and security groups for IPv6, follow: [Create IPv6 VPC](../vpc/README.md#Create_IPv6_VPC).

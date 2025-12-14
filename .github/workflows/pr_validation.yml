@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Define tf-modules
         id: tf-modules
-        run: echo 'tf-modules=["ec2_ipv4", "ec2_ipv6", "iam", "key_management", "s3", "vpc"]' >> "$GITHUB_OUTPUT"
+        run: echo 'tf-modules=["ec2_ipv4", "ec2_ipv6", "iam", "modules/key_management", "s3", "vpc"]' >> "$GITHUB_OUTPUT"
 
       # - run: echo ${{ steps.tf-modules.outputs.tf-modules }}
 
