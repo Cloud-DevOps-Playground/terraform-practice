@@ -24,7 +24,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_ssh" {
   security_group_id = aws_security_group.allow_traffic.id
   description       = "Security group ingress rule for ssh connectivity."
 
-  cidr_ipv4   = "${chomp(data.http.my_ip.body)}/32"
+  cidr_ipv4   = "${chomp(data.http.my_ip.response_body)}/32"
   from_port   = var.ssh_port
   to_port     = var.ssh_port
   ip_protocol = "tcp"
