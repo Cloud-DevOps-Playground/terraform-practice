@@ -35,11 +35,6 @@ variable "ec2_instance_type" {
   default     = "t2.micro"
 }
 
-variable "my_ip" {
-  description = "host machine ip for ssh `$(curl -s -4 ifconfig.info | tr -d [:space:])`"
-  type        = string
-}
-
 variable "ssh_port" {
   description = "Custom SSH port to open for communication over ssh protocol."
   type        = number

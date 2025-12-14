@@ -1,10 +1,6 @@
 # Deploy EC2 Instance(s)
 Deploy basic EC2 instance(s) with IPv4 public IP.
 
-## Prerequisites
-Ensure a AWS key-pair resource is already created before proceeding to create EC2 instance.
-To create a AWS key-pair resource, follow: [AWS Key-Pair Management](../key_management/README.md#AWS_Key-Pair_Management).
-
 ## Populate user variables
 Copy `user.tfvars` to `user.auto.tfvars`.
 ```shell

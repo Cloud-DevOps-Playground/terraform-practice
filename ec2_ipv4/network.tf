@@ -1,3 +1,7 @@
+data "http" "my_ip" {
+  url = "http://ipv4.icanhazip.com"
+}
+
 data "aws_availability_zones" "available" {
   state = "available"
 }
@@ -20,7 +24,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_ssh" {
   security_group_id = aws_security_group.allow_traffic.id
   description       = "Security group ingress rule for ssh connectivity."
 
-  cidr_ipv4   = "${var.my_ip}/32"
+  cidr_ipv4   = "${chomp(data.http.my_ip.body)}/32"
   from_port   = var.ssh_port
   to_port     = var.ssh_port
   ip_protocol = "tcp"
@@ -30,7 +34,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_custom_port" {
   security_group_id = aws_security_group.allow_traffic.id
   description       = "Security group ingress rule for ssh connectivity."
 
-  cidr_ipv4   = "${var.my_ip}/32"
+  cidr_ipv4   = "${chomp(data.http.my_ip.body)}/32"
   from_port   = 8080
   to_port     = 8080
   ip_protocol = "tcp"
