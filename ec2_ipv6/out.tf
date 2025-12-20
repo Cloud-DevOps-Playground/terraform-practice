@@ -3,7 +3,7 @@
 # }
 
 output "aws_key_pair_name" {
-  value = data.aws_key_pair.ssh_key_pair.key_name
+  value = module.key_management.ssh_key_name
 }
 
 # output "aws_subnets" {

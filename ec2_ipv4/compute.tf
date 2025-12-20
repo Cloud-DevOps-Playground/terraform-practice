@@ -34,6 +34,7 @@
 resource "aws_instance" "linux_server" {
   # Ensure the module finished writing the PEM file before creating the instance
   depends_on = [module.key_management]
+
   # Basic Instance Setup
   count           = var.ec2_instance_count
   ami           = var.ami_id
