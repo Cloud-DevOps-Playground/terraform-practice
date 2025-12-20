@@ -1,9 +1,15 @@
 # Reference for IPV6 VPC configuration:
 # https://medium.com/@mattias.holmlund/setting-up-ipv6-on-amazon-with-terraform-e14b3bfef577
 
+# Fetch host IPv6 via HTTP call
+# Response contains a plain IPv6 address (with trailing newline)
+data "http" "my_ip" {
+  url = "http://ipv6.icanhazip.com"
+}
+
 data "aws_availability_zones" "available" {
   state = "available"
-}
+} 
 
 resource "aws_vpc" "ipv6_vpc" {
   cidr_block                           = "10.0.1.0/24"
@@ -101,7 +107,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_ssh_port" {
   description       = "Security group ingress rule for ssh connectivity."
 
   # cidr_ipv6 = aws_vpc.ipv6_vpc.ipv6_cidr_block
-  cidr_ipv6   = "${var.my_ip}/128"
+  cidr_ipv6   = "${chomp(data.http.my_ip.response_body)}/128"
   from_port   = var.ssh_port
   to_port     = var.ssh_port
   ip_protocol = "tcp"
@@ -117,7 +123,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_ssh_port" {
 #   description       = "Security group ingress rule for custom port connectivity."
 
 #   # cidr_ipv6 = aws_vpc.ipv6_vpc.ipv6_cidr_block
-#   cidr_ipv6   = "${var.my_ip}/128"
+#   cidr_ipv6   = "${chomp(data.http.my_ip.response_body)}/128"
 #   from_port   = 8080
 #   to_port     = 8080
 #   ip_protocol = "tcp"
