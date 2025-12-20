@@ -29,3 +29,11 @@ module "key_management" {
   key_name = "${var.tag_name}-key"
 }
 
+module "vpc" {
+  source     = "../modules/vpc"
+  aws_region = var.aws_region
+  tag_name   = var.tag_name
+  # ssh_port can be left as default or overridden via module inputs
+  # ssh_port = 22
+}
+

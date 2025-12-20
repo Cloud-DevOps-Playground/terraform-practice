@@ -28,34 +28,7 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
-# Using key_management module for SSH key pair; see module.key_management outputs
-
-
-data "aws_subnets" "ip_subnet" {
-  filter {
-    name   = "tag:Name"
-    values = ["${var.tag_name}"]
-  }
-}
-
-data "aws_security_groups" "allow_traffic" {
-  filter {
-    name   = "tag:Name"
-    values = ["${var.tag_name}"]
-  }
-}
-
-data "aws_vpc_security_group_rule" "ssh_ingress" {
-  filter {
-    name   = "tag:Name"
-    values = ["${var.tag_name}"]
-  }
-
-  filter {
-    name   = "tag:Type"
-    values = ["ssh_port_ingress"]
-  }
-}
+# Using vpc module outputs for network resources: module.vpc.subnet_ids, module.vpc.security_group_id, module.vpc.ssh_port
 
 # # Not used. Hence commented.
 # data "aws_vpc_security_group_rule" "custom_port_ingress" {
@@ -114,12 +87,12 @@ resource "aws_instance" "linux_server" {
 
   depends_on = [
     module.key_management,
-    data.aws_subnets.ip_subnet
+    module.vpc
   ]
   enable_primary_ipv6    = true
   ipv6_address_count     = 1
-  subnet_id              = element(data.aws_subnets.ip_subnet.ids, 0)
-  vpc_security_group_ids = data.aws_security_groups.allow_traffic.ids
+  subnet_id              = element(module.vpc.subnet_ids, 0)
+  vpc_security_group_ids = [module.vpc.security_group_id]
 
   # Set this to true if you want IPv6 + IPv4 internet connectivity
   # associate_public_ip_address = false
@@ -141,7 +114,7 @@ resource "aws_instance" "linux_server" {
         echo "Welcome to $(hostname)" > /etc/motd.d/${var.tag_name}
 
         # sshd service config
-        echo 'Port "${data.aws_vpc_security_group_rule.ssh_ingress.to_port}"' > /etc/ssh/sshd_config.d/${var.tag_name}.conf
+        echo 'Port "${module.vpc.ssh_port}"' > /etc/ssh/sshd_config.d/${var.tag_name}.conf
         echo 'PermitRootLogin no' >> /etc/ssh/sshd_config.d/${var.tag_name}.conf
         echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config.d/${var.tag_name}.conf
         if [[ "debian" == "$(grep -E "^ID_LIKE=" /etc/os-release | cut -d '=' -f 2 | tr -d '"')" ]]; then
@@ -158,7 +131,7 @@ resource "aws_instance" "linux_server" {
     user        = "ec2-user"
     private_key = module.key_management.ssh_private_key
     host        = element(self.ipv6_addresses, 0)
-    port        = data.aws_vpc_security_group_rule.ssh_ingress.to_port
+    port        = module.vpc.ssh_port
     agent       = false
   }
 
