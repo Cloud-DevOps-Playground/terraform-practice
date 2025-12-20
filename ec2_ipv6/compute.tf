@@ -28,12 +28,8 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
-data "aws_key_pair" "ssh_key_pair" {
-  filter {
-    name   = "tag:Name"
-    values = ["${var.tag_name}"]
-  }
-}
+# Using key_management module for SSH key pair; see module.key_management outputs
+
 
 data "aws_subnets" "ip_subnet" {
   filter {
@@ -107,7 +103,7 @@ resource "aws_instance" "linux_server" {
   availability_zone = data.aws_availability_zones.available.names[0]
   count             = var.ec2_instance_count
   instance_type     = var.ec2_instance_type
-  key_name          = data.aws_key_pair.ssh_key_pair.key_name
+  key_name          = module.key_management.ssh_key_name
 
   # Network Setup
   # NOTE: Required when explicit aws_network_interface resource is defined
@@ -117,7 +113,7 @@ resource "aws_instance" "linux_server" {
   # }
 
   depends_on = [
-    data.aws_key_pair.ssh_key_pair,
+    module.key_management,
     data.aws_subnets.ip_subnet
   ]
   enable_primary_ipv6    = true
@@ -160,7 +156,7 @@ resource "aws_instance" "linux_server" {
   connection {
     type        = "ssh"
     user        = "ec2-user"
-    private_key = file("${path.module}/../key_management/${data.aws_key_pair.ssh_key_pair.key_name}.pem")
+    private_key = module.key_management.ssh_private_key
     host        = element(self.ipv6_addresses, 0)
     port        = data.aws_vpc_security_group_rule.ssh_ingress.to_port
     agent       = false
