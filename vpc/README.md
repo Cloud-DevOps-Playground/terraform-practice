@@ -21,19 +21,17 @@ Create a VPC with public subnet for IPv6 traffic.
 Perform the following steps using AWS CLI:
 1. Create a new security group in default subnet, in order to allow ssh access to EC2 instance
 
-**Note**: Remember to assign your public IP (_your Internet Provided IP as seen by AWS_) to the **_my_ip_** variable
-</br>Or
-</br>just rely on `-var my_ip=$(curl -s -6 ifconfig.info | tr -d [:space:])` as used in command below:
+**Note**: The module automatically detects your public IPv6 address using `http://ipv6.icanhazip.com`.
 
 ```bash
-$ terraform plan -var my_ip=$(curl -s -6 ifconfig.info | tr -d [:space:])                   # Generates a speculative execution plan
-$ terraform apply --auto-approve -var my_ip=$(curl -s -6 ifconfig.info | tr -d [:space:])   # Actually create the resources
+$ terraform plan    # Generates a speculative execution plan (auto-detects your IPv6)
+$ terraform apply --auto-approve   # Actually create the resources
 ```
 
 ## Destroy resources
 Cleanup all the resources created by the `apply` command in previous step.
 ```bash
-$ terraform destroy --auto-approve -var my_ip=$(curl -s -6 ifconfig.info | tr -d [:space:])
+$ terraform destroy --auto-approve   # Auto-detected IP is used
 ```
 
 ## Connect to AWS
